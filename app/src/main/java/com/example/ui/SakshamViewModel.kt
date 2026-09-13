@@ -323,7 +323,7 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
                 district = district,
                 socialCategory = category,
                 familyIncome = income,
-                activeBusinessTarget = activeBusinessTarget.ifBlank { current?.activeBusinessTarget ?: "Dairy Farm (4 Cattle)" },
+                activeBusinessTarget = activeBusinessTarget.ifBlank { current?.activeBusinessTarget ?: "" },
                 photoUri = photoUri ?: current?.photoUri,
                 selectedLanguage = _selectedLanguage.value,
                 isLoggedIn = true
@@ -348,7 +348,8 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         gender: String = "",
         state: String = "Uttar Pradesh",
         district: String = "Varanasi",
-        category: String = "Scheduled Caste (SC)"
+        category: String = "Scheduled Caste (SC)",
+        income: String = ""
     ) {
         viewModelScope.launch {
             val current = userProfile.value
@@ -361,6 +362,8 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
                 state = state,
                 district = district,
                 socialCategory = if (category.isNotBlank()) category else (current?.socialCategory ?: "Scheduled Caste (SC)"),
+                familyIncome = income,
+                activeBusinessTarget = current?.activeBusinessTarget ?: "",
                 selectedLanguage = _selectedLanguage.value,
                 isLoggedIn = true
             )

@@ -109,7 +109,8 @@ fun LoginScreen(
         gender: String,
         state: String,
         district: String,
-        category: String
+        category: String,
+        income: String
     ) -> Unit,
     isDarkMode: Boolean = false
 ) {
@@ -122,6 +123,7 @@ fun LoginScreen(
     var ageText by remember { mutableStateOf("") }
     var selectedGender by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("") }
+    var selectedIncome by remember { mutableStateOf("") }
     var selectedState by remember { mutableStateOf("") }
     var selectedDistrict by remember { mutableStateOf("") }
     var mobileNumber by remember { mutableStateOf("") }
@@ -131,6 +133,7 @@ fun LoginScreen(
     var stateDropdownExpanded by remember { mutableStateOf(false) }
     var districtDropdownExpanded by remember { mutableStateOf(false) }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    var incomeDropdownExpanded by remember { mutableStateOf(false) }
 
     // Validation State (Shown only after user attempts to continue)
     var hasAttemptedSubmit by remember { mutableStateOf(false) }
@@ -163,6 +166,15 @@ fun LoginScreen(
         "Other Backward Class (OBC)",
         "General / EWS",
         "Safai Karamchari / Target Group"
+    )
+
+    // Supported Family Income Brackets
+    val incomeOptions = listOf(
+        "Below ₹1.50 Lakh",
+        "₹1.50 - 3.00 Lakh",
+        "₹3.00 - 5.00 Lakh",
+        "₹5.00 - 8.00 Lakh",
+        "Above ₹8.00 Lakh"
     )
 
     // Supported Gender Options
@@ -285,13 +297,14 @@ fun LoginScreen(
     val isAgeValid = ageParsed != null && ageParsed in 18..100
     val isGenderValid = selectedGender.isNotBlank()
     val isCategoryValid = selectedCategory.isNotBlank()
+    val isIncomeValid = selectedIncome.isNotBlank()
     val isStateValid = selectedState.isNotBlank()
     val isDistrictValid = selectedDistrict.isNotBlank()
     val isPhoneValid = mobileNumber.trim().length == 10 && mobileNumber.all { it.isDigit() } && mobileNumber.firstOrNull() in listOf('6', '7', '8', '9')
     val emailRegex = remember { Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$") }
     val isEmailValid = emailAddress.trim().isNotEmpty() && emailRegex.matches(emailAddress.trim())
 
-    val isFormValid = isNameValid && isAgeValid && isGenderValid && isCategoryValid && isStateValid && isDistrictValid && isPhoneValid && isEmailValid
+    val isFormValid = isNameValid && isAgeValid && isGenderValid && isCategoryValid && isIncomeValid && isStateValid && isDistrictValid && isPhoneValid && isEmailValid
 
     // Helper to generate a new simulated 6-digit OTP
     fun generateNewOtp() {
@@ -561,7 +574,55 @@ fun LoginScreen(
                             }
                         }
 
-                        // 5. STATE DROPDOWN
+                        // 5. ANNUAL FAMILY INCOME DROPDOWN
+                        ExposedDropdownMenuBox(
+                            expanded = incomeDropdownExpanded,
+                            onExpandedChange = { incomeDropdownExpanded = !incomeDropdownExpanded },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OutlinedTextField(
+                                value = selectedIncome,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Annual Family Income *") },
+                                placeholder = { Text("Select your annual family income") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.AccountBalance, contentDescription = null, tint = GovBluePrimary)
+                                },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = incomeDropdownExpanded) },
+                                isError = hasAttemptedSubmit && !isIncomeValid,
+                                supportingText = {
+                                    if (hasAttemptedSubmit && !isIncomeValid) {
+                                        Text("Please select your annual family income", color = MaterialTheme.colorScheme.error, fontSize = 11.sp)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor()
+                                    .testTag("login_income_dropdown"),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = GovBluePrimary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            )
+                            ExposedDropdownMenu(
+                                expanded = incomeDropdownExpanded,
+                                onDismissRequest = { incomeDropdownExpanded = false }
+                            ) {
+                                incomeOptions.forEach { income ->
+                                    DropdownMenuItem(
+                                        text = { Text(income, fontSize = 13.sp) },
+                                        onClick = {
+                                            selectedIncome = income
+                                            incomeDropdownExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // 6. STATE DROPDOWN
                         ExposedDropdownMenuBox(
                             expanded = stateDropdownExpanded,
                             onExpandedChange = { stateDropdownExpanded = !stateDropdownExpanded },
@@ -610,7 +671,7 @@ fun LoginScreen(
                             }
                         }
 
-                        // 6. DISTRICT DROPDOWN
+                        // 7. DISTRICT DROPDOWN
                         ExposedDropdownMenuBox(
                             expanded = districtDropdownExpanded,
                             onExpandedChange = {
@@ -669,7 +730,7 @@ fun LoginScreen(
                             }
                         }
 
-                        // 7. MOBILE NUMBER
+                        // 8. MOBILE NUMBER
                         OutlinedTextField(
                             value = mobileNumber,
                             onValueChange = { if (it.length <= 10 && it.all { c -> c.isDigit() }) mobileNumber = it },
@@ -697,7 +758,7 @@ fun LoginScreen(
                             )
                         )
 
-                        // 8. EMAIL ADDRESS
+                        // 9. EMAIL ADDRESS
                         OutlinedTextField(
                             value = emailAddress,
                             onValueChange = { emailAddress = it },
@@ -925,7 +986,8 @@ fun LoginScreen(
                                         selectedGender,
                                         selectedState,
                                         selectedDistrict,
-                                        selectedCategory
+                                        selectedCategory,
+                                        selectedIncome
                                     )
                                 }
                             },

@@ -55,10 +55,10 @@ data class UserProfileEntity(
     val state: String = "",
     val district: String = "",
     val socialCategory: String = "",
-    val familyIncome: String = "₹1.50 - 3.00 Lakh",
+    val familyIncome: String = "",
     val selectedLanguage: String = "English",
     val photoUri: String? = null,
-    val activeBusinessTarget: String = "Dairy Farm (4 Cattle)",
+    val activeBusinessTarget: String = "",
     val isLoggedIn: Boolean = false
 )
 

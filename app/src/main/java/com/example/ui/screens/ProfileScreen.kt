@@ -112,8 +112,8 @@ fun ProfileScreen(
     val state = userProfile?.state?.ifBlank { "Uttar Pradesh" } ?: "Uttar Pradesh"
     val district = userProfile?.district?.ifBlank { "Varanasi" } ?: "Varanasi"
     val category = userProfile?.socialCategory?.ifBlank { "Scheduled Caste (SC)" } ?: "Scheduled Caste (SC)"
-    val income = userProfile?.familyIncome?.ifBlank { "₹1.50 - 3.00 Lakh" } ?: "₹1.50 - 3.00 Lakh"
-    val activeTarget = userProfile?.activeBusinessTarget?.ifBlank { "Dairy Farm (4 Cattle)" } ?: "Dairy Farm (4 Cattle)"
+    val income = userProfile?.familyIncome?.ifBlank { "Not specified" } ?: "Not specified"
+    val activeTarget = userProfile?.activeBusinessTarget?.ifBlank { "Not set" } ?: "Not set"
     val photoUri = userProfile?.photoUri
 
     // Zero-permission Android Photo Picker for profile photo
@@ -647,8 +647,8 @@ fun ProfileScreen(
                             editState.ifBlank { state },
                             editDistrict.ifBlank { district },
                             editCategory,
-                            editIncome.ifBlank { income },
-                            editTarget.ifBlank { activeTarget }
+                            editIncome,
+                            editTarget
                         )
                         showEditDialog = false
                         Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
