@@ -180,8 +180,23 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
                 chatHistory = currentHistory
             )
 
+            val suggestionsIndex = responseText.indexOf("SUGGESTIONS:")
+            val cleanText: String
+            val dynamicPrompts: List<String>
+
+            if (suggestionsIndex != -1) {
+                cleanText = responseText.substring(0, suggestionsIndex).trim()
+                val rawSuggestions = responseText.substring(suggestionsIndex + "SUGGESTIONS:".length).trim()
+                dynamicPrompts = rawSuggestions.lines()
+                    .map { it.trim().removePrefix("-").removePrefix("•").removePrefix("*").trim() }
+                    .filter { it.isNotBlank() }
+            } else {
+                cleanText = responseText
+                dynamicPrompts = emptyList()
+            }
+
             val p = promptText.lowercase()
-            val suggestedPrompts = when {
+            val fallbackPrompts = when {
                 p.contains("document") || p.contains("dastavez") || p.contains("paper") || p.contains("कागज") -> listOf(
                     "How to get digital SC caste certificate?",
                     "What is the family income ceiling?",
@@ -224,10 +239,12 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
                 )
             }
 
+            val finalPrompts = if (dynamicPrompts.isNotEmpty()) dynamicPrompts else fallbackPrompts
+
             val botMsg = ChatMessage(
-                text = responseText,
+                text = cleanText,
                 isUser = false,
-                suggestedPrompts = suggestedPrompts
+                suggestedPrompts = finalPrompts
             )
             _chatMessages.value = _chatMessages.value + botMsg
             _isAiThinking.value = false

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -22,6 +23,8 @@ import com.example.data.repository.GovernmentDataRepository
 import com.example.ui.SakshamViewModel
 import com.example.ui.components.SakshamBottomBar
 import com.example.ui.components.SakshamTopBar
+import com.example.ui.i18n.LocalLanguage
+import com.example.ui.i18n.SakshamStrings
 import com.example.ui.navigation.Screen
 import com.example.ui.screens.AIChatScreen
 import com.example.ui.screens.ActionPlanScreen
@@ -76,45 +79,46 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
     // Check if user is logged in (strictly true only when authenticated)
     val isLoggedIn = userProfile?.isLoggedIn == true
 
-    if (!isLoggedIn) {
-        LoginScreen(
-            onLoginSuccess = { name, phone, email, age, gender, state, district, category ->
-                viewModel.loginUser(
-                    name = name,
-                    phone = phone,
-                    state = state,
-                    district = district
-                )
-            },
-            isDarkMode = isDarkMode
+    CompositionLocalProvider(LocalLanguage provides selectedLanguage) {
+        if (!isLoggedIn) {
+            LoginScreen(
+                onLoginSuccess = { name, phone, email, age, gender, state, district, category ->
+                    viewModel.loginUser(
+                        name = name,
+                        phone = phone,
+                        state = state,
+                        district = district
+                    )
+                },
+                isDarkMode = isDarkMode
+            )
+            return@CompositionLocalProvider
+        }
+
+        val rootTabs = listOf(
+            Screen.Home.route,
+            Screen.Schemes.route,
+            Screen.Calculator.route,
+            Screen.Partners.route,
+            Screen.Profile.route
         )
-        return
-    }
+        val isRootTab = currentRoute in rootTabs
 
-    val rootTabs = listOf(
-        Screen.Home.route,
-        Screen.Schemes.route,
-        Screen.Calculator.route,
-        Screen.Partners.route,
-        Screen.Profile.route
-    )
-    val isRootTab = currentRoute in rootTabs
+        val currentScreenTitle: String? = when (currentRoute) {
+            Screen.Home.route -> null
+            Screen.Schemes.route -> SakshamStrings.get("schemes_heading", selectedLanguage)
+            Screen.Calculator.route -> SakshamStrings.get("calculator_heading", selectedLanguage)
+            Screen.Partners.route -> SakshamStrings.get("partners_heading", selectedLanguage)
+            Screen.Profile.route -> SakshamStrings.get("profile_title", selectedLanguage)
+            Screen.BusinessForm.route -> SakshamStrings.get("card_find_scheme_title", selectedLanguage)
+            Screen.ActionPlan.route -> SakshamStrings.get("ai_business_action_plan", selectedLanguage)
+            Screen.SchemeDetail.route -> selectedScheme?.shortName ?: SakshamStrings.get("schemes_heading", selectedLanguage)
+            Screen.AIChat.route -> SakshamStrings.get("saksham_saathi_सक्षम_साथी", selectedLanguage)
+            Screen.HelpContact.route -> SakshamStrings.get("help_title", selectedLanguage)
+            else -> null
+        }
 
-    val currentScreenTitle = when (currentRoute) {
-        Screen.Home.route -> null
-        Screen.Schemes.route -> "Government Schemes"
-        Screen.Calculator.route -> "EMI & Moratorium Calculator"
-        Screen.Partners.route -> "Channel Partner Locator"
-        Screen.Profile.route -> "User Profile & Help"
-        Screen.BusinessForm.route -> "Business Setup Form"
-        Screen.ActionPlan.route -> "AI Business Action Plan"
-        Screen.SchemeDetail.route -> selectedScheme?.shortName ?: "Scheme Details"
-        Screen.AIChat.route -> "Saksham Saathi AI"
-        Screen.HelpContact.route -> "Help, FAQs & Support"
-        else -> null
-    }
-
-    Scaffold(
+        Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             SakshamTopBar(
@@ -285,6 +289,7 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
             }
         }
     }
+}
 }
 
 @Composable

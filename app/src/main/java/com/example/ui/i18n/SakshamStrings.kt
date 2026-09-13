@@ -15,11 +15,14 @@ object SakshamStrings {
 
     fun get(key: String, language: String = "English"): String {
         val langKey = when (language) {
-            "हिन्दी", "Hindi" -> "hi"
-            "मराठी", "Marathi" -> "mr"
-            "বাংলা", "Bengali" -> "bn"
-            "தமிழ்", "Tamil" -> "ta"
-            "తెలుగు", "Telugu" -> "te"
+            "हिन्दी", "Hindi", "hi" -> "hi"
+            "मराठी", "Marathi", "mr" -> "mr"
+            "বাংলা", "Bengali", "bn" -> "bn"
+            "தமிழ்", "Tamil", "ta" -> "ta"
+            "తెలుగు", "Telugu", "te" -> "te"
+            "ಕನ್ನಡ", "Kannada", "kn" -> "kn"
+            "ગુજરાતી", "Gujarati", "gu" -> "gu"
+            "ਪੰਜਾਬੀ", "Punjabi", "pa" -> "pa"
             else -> "en"
         }
         return translations[langKey]?.get(key) ?: translations["en"]?.get(key) ?: key

@@ -82,8 +82,8 @@ class GeminiAdvisorService {
             }
 
             try {
-                // Using Gemini 1.5 Flash as it is recommended for general chat.
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${'$'}apiKey"
+                // Using Gemini 3.5 Flash as required by system standards.
+                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${'$'}apiKey"
 
                 val jsonBody = JSONObject()
                 val contentsArray = JSONArray()

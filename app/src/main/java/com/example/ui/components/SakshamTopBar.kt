@@ -62,7 +62,10 @@ val supportedLanguages = listOf(
     "मराठी" to "Marathi",
     "বাংলা" to "Bengali",
     "தமிழ்" to "Tamil",
-    "తెలుగు" to "Telugu"
+    "తెలుగు" to "Telugu",
+    "ಕನ್ನಡ" to "Kannada",
+    "ગુજરાતી" to "Gujarati",
+    "ਪੰਜਾਬੀ" to "Punjabi"
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
