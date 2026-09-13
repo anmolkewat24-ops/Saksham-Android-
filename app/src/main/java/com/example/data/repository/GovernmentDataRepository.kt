@@ -526,18 +526,20 @@ object GovernmentDataRepository {
         }
 
         val expenseRevenueProjection = if (isDairy) {
-            "Estimated Monthly Milk Yield: ${(animalCount * 14 * 30)} Litres @ ₹45/L = ₹%,d. Monthly Fodder & Vet Expenses: ₹%,d. Projected Net Monthly Surplus: ₹%,d (Easily covers concessional EMI of ~₹%,d).".format(
-                (animalCount * 14 * 30 * 45L),
-                (animalCount * 4500L),
-                (animalCount * 14 * 30 * 45L) - (animalCount * 4500L),
-                (loanReq * 6 / 100 / 12) + (loanReq / 60)
-            )
+            val milkRevenue = animalCount * 14 * 30 * 45L
+            val fodderExp = animalCount * 4500L
+            val netSurplus = milkRevenue - fodderExp
+            val estEmi = (loanReq * 6 / 100 / 12) + (loanReq / 60)
+            val fmtMilkRev = "%,d".format(milkRevenue)
+            val fmtFodder = "%,d".format(fodderExp)
+            val fmtNet = "%,d".format(netSurplus)
+            val fmtEmi = "%,d".format(estEmi)
+            "Estimated Monthly Milk Yield: ${(animalCount * 14 * 30)} Litres @ ₹45/L = ₹$fmtMilkRev. Monthly Fodder & Vet Expenses: ₹$fmtFodder. Projected Net Monthly Surplus: ₹$fmtNet (Easily covers concessional EMI of ~₹$fmtEmi)."
         } else {
-            "Projected Monthly Revenue: ₹%,d. Operating Costs (raw materials, wages, power): ₹%,d. Estimated Monthly Profit Margin: ~25% (₹%,d).".format(
-                profile.monthlyRevenue,
-                profile.monthlyExpenses,
-                (profile.monthlyRevenue - profile.monthlyExpenses).coerceAtLeast(15000L)
-            )
+            val rev = "%,d".format(profile.monthlyRevenue)
+            val exp = "%,d".format(profile.monthlyExpenses)
+            val margin = "%,d".format((profile.monthlyRevenue - profile.monthlyExpenses).coerceAtLeast(15000L))
+            "Projected Monthly Revenue: ₹$rev. Operating Costs (raw materials, wages, power): ₹$exp. Estimated Monthly Profit Margin: ~25% (₹$margin)."
         }
 
         val growthPlan = listOf(
@@ -553,12 +555,11 @@ object GovernmentDataRepository {
             "NSFDC Mahila Samriddhi Yojana (4% interest) or Micro Credit Finance (5% interest)."
         }
 
-        val estimatedLoanNeeded = "Total Project Cost: ₹%,d | Your Equity: ₹%,d (%.1f%%) | Recommended Govt Loan: ₹%,d".format(
-            totalInv,
-            ownCap,
-            (ownCap.toDouble() / totalInv.toDouble() * 100),
-            loanReq
-        )
+        val fmtTotal = "%,d".format(totalInv)
+        val fmtOwn = "%,d".format(ownCap)
+        val fmtPct = "%.1f".format(ownCap.toDouble() / totalInv.toDouble() * 100)
+        val fmtLoan = "%,d".format(loanReq)
+        val estimatedLoanNeeded = "Total Project Cost: ₹$fmtTotal | Your Equity: ₹$fmtOwn ($fmtPct%) | Recommended Govt Loan: ₹$fmtLoan"
 
         val requiredDocuments = listOf(
             "Aadhaar Card and PAN Card of applicant",

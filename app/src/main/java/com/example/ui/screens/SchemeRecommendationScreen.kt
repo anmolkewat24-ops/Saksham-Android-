@@ -151,7 +151,7 @@ fun SchemeRecommendationScreen(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "Target: ${profile.businessType} (₹%,d Loan Required)".format(profile.loanRequired),
+                        text = "Target: ${profile.businessType} (₹${"%,d".format(profile.loanRequired)} Loan Required)",
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
