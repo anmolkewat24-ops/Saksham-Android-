@@ -76,7 +76,7 @@ fun SchemeDetailScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Scheme details not found.", color = MaterialTheme.colorScheme.onSurface)
+            Text(com.example.ui.i18n.SakshamStrings.get("scheme_details_not_found"), color = MaterialTheme.colorScheme.onSurface)
         }
         return
     }
@@ -233,8 +233,7 @@ fun SchemeDetailScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
-                        Text(
-                            text = "Subsidy & Margin Money Support",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("subsidy_&_margin_money_support"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = if (isDarkMode) GrowthGreenLight else Color(0xFF14532D)
@@ -336,8 +335,7 @@ fun SchemeDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
-                    Text(
-                        text = "Authorized Channel Partners & Banks",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("authorized_channel_partners_&_banks"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -369,8 +367,7 @@ fun SchemeDetailScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Find Eligible Partner (निकटतम बैंक खोजें)",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("find_eligible_partner_निकटतम_बैंक_खोजें"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = Color.White
@@ -393,8 +390,7 @@ fun SchemeDetailScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Ask AI Assistant About This Scheme",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("ask_ai_assistant_about_this_scheme"),
                             color = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp

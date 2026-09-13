@@ -130,8 +130,7 @@ fun ChannelPartnerLocatorScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Authorized Channel Partners Map",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("authorized_channel_partners_map"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -143,7 +142,7 @@ fun ChannelPartnerLocatorScreen(
                                 .background(if (isDarkMode) Color(0xFF132A1C) else GrowthGreenLight)
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Text("5 Nearby", color = GrowthGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(com.example.ui.i18n.SakshamStrings.get("5_nearby"), color = GrowthGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -215,20 +214,17 @@ fun ChannelPartnerLocatorScreen(
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Text(
-                                "🟢 You",
+                            Text(com.example.ui.i18n.SakshamStrings.get("🟢_you"),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                "🔵 SCA Office",
+                            Text(com.example.ui.i18n.SakshamStrings.get("🔵_sca_office"),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                "🟠 Partner Banks",
+                            Text(com.example.ui.i18n.SakshamStrings.get("🟠_partner_banks"),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -477,8 +473,7 @@ fun ChannelPartnerCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Available Loans Chips
-            Text(
-                text = "Available Schemes at this branch:",
+            Text(text = com.example.ui.i18n.SakshamStrings.get("available_schemes_at_this_branch"),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -525,8 +520,7 @@ fun ChannelPartnerCard(
                 ) {
                     Icon(imageVector = Icons.Default.Call, contentDescription = null, tint = GrowthGreen, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        "Call Branch",
+                    Text(com.example.ui.i18n.SakshamStrings.get("call_branch"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -544,7 +538,7 @@ fun ChannelPartnerCard(
                 ) {
                     Icon(imageVector = Icons.Default.Navigation, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Get Directions", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(com.example.ui.i18n.SakshamStrings.get("get_directions"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

@@ -350,14 +350,12 @@ fun HelpContactScreen(
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text(
-                                        text = "National Toll-Free Helpline (Govt of India)",
+                                    Text(text = com.example.ui.i18n.SakshamStrings.get("national_toll_free_helpline_govt_of_india"),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isDarkMode) Color.White else Color(0xFF14532D)
                                     )
-                                    Text(
-                                        text = "1800-11-2001 (Available 9:30 AM - 6:00 PM on Working Days)",
+                                    Text(text = com.example.ui.i18n.SakshamStrings.get("1800_11_2001_available_930_am_600_pm_on_working_days"),
                                         fontSize = 11.sp,
                                         color = if (isDarkMode) Color(0xFFBBF7D0) else Color(0xFF166534)
                                     )
@@ -426,22 +424,19 @@ fun HelpContactScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
-                            Text(
-                                text = "Important Official Disclaimer",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("important_official_disclaimer"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF92400E)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Saksham is a guidance platform and does not guarantee loan approval. Final eligibility, sanction, and disbursement are determined by the concerned government scheme and authorized channel partner.",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_is_a_guidance_platform_and_does_not_guarantee_loan_approval_final_eligibility_sanction_and_disbursement_are_determined_by_the_concerned_government_scheme_and_authorized_channel_partner"),
                                 fontSize = 11.sp,
                                 lineHeight = 16.sp,
                                 color = if (isDarkMode) Color(0xFFF3F4F6) else Color(0xFF451A03)
                             )
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "Official Information Note: All scheme data is synchronized from official guidelines issued by NSFDC and the Ministry of Social Justice & Empowerment, Government of India. Beware of unauthorized intermediaries.",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("official_information_note_all_scheme_data_is_synchronized_from_official_guidelines_issued_by_nsfdc_and_the_ministry_of_social_justice_&_empowerment_government_of_india_beware_of_unauthorized_intermediaries"),
                                 fontSize = 10.sp,
                                 color = if (isDarkMode) Color(0xFFD1D5DB) else Color(0xFF78350F)
                             )
@@ -706,8 +701,7 @@ private fun SupportFormCard(
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Thank You! Your support request has been registered.",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("thank_you!_your_support_request_has_been_registered"),
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF14532D),
                             fontSize = 13.sp
@@ -723,7 +717,7 @@ private fun SupportFormCard(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Your Full Name") },
+                    label = { Text(com.example.ui.i18n.SakshamStrings.get("your_full_name")) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -731,7 +725,7 @@ private fun SupportFormCard(
                 OutlinedTextField(
                     value = contact,
                     onValueChange = { contact = it },
-                    label = { Text("Your Phone or Email Address") },
+                    label = { Text(com.example.ui.i18n.SakshamStrings.get("your_phone_or_email_address")) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -744,7 +738,7 @@ private fun SupportFormCard(
                         value = selectedCategory,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Select Issue Category") },
+                        label = { Text(com.example.ui.i18n.SakshamStrings.get("select_issue_category")) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDropdown) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -770,7 +764,7 @@ private fun SupportFormCard(
                 OutlinedTextField(
                     value = message,
                     onValueChange = { message = it },
-                    label = { Text("Describe your query or problem") },
+                    label = { Text(com.example.ui.i18n.SakshamStrings.get("describe_your_query_or_problem")) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 5,
@@ -792,7 +786,7 @@ private fun SupportFormCard(
                 ) {
                     Icon(imageVector = Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Submit Support Request")
+                    Text(com.example.ui.i18n.SakshamStrings.get("submit_support_request"))
                 }
             }
         }
@@ -836,22 +830,19 @@ private fun FeedbackCard(isDarkMode: Boolean) {
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Thank you for rating Saksham!",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("thank_you_for_rating_saksham!"),
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF14532D),
                             fontSize = 13.sp
                         )
-                        Text(
-                            text = "Your feedback helps us empower more entrepreneurs.",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("your_feedback_helps_us_empower_more_entrepreneurs"),
                             fontSize = 11.sp,
                             color = Color(0xFF166534)
                         )
                     }
                 }
             } else {
-                Text(
-                    text = "How was your experience using Saksham?",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("how_was_your_experience_using_saksham"),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface
@@ -878,7 +869,7 @@ private fun FeedbackCard(isDarkMode: Boolean) {
                 OutlinedTextField(
                     value = feedbackText,
                     onValueChange = { feedbackText = it },
-                    label = { Text("What did you like or how can we improve? (Optional)") },
+                    label = { Text(com.example.ui.i18n.SakshamStrings.get("what_did_you_like_or_how_can_we_improve_optional")) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 4,
@@ -894,7 +885,7 @@ private fun FeedbackCard(isDarkMode: Boolean) {
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Submit Feedback")
+                    Text(com.example.ui.i18n.SakshamStrings.get("submit_feedback"))
                 }
             }
         }

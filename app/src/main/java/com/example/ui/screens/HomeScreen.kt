@@ -480,8 +480,7 @@ private fun MainOptionCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text(
-                    text = "Open Service",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("open_service"),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = accentColor

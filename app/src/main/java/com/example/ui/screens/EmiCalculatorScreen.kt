@@ -110,8 +110,7 @@ fun EmiCalculatorScreen(
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Estimated Monthly EMI (मासिक किस्त)",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("estimated_monthly_emi_मासिक_किस्त"),
                         color = Color.White.copy(alpha = 0.85f),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
@@ -143,15 +142,15 @@ fun EmiCalculatorScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Principal Loan", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
+                            Text(com.example.ui.i18n.SakshamStrings.get("principal_loan"), fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
                             Text("₹%,d".format(loanAmount.toLong()), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Total Interest", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
+                            Text(com.example.ui.i18n.SakshamStrings.get("total_interest"), fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
                             Text("₹%,d".format(totalInterest.toLong()), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GrowthGreenLight)
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Total Payable", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
+                            Text(com.example.ui.i18n.SakshamStrings.get("total_payable"), fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
                             Text("₹%,d".format(totalRepayment.toLong()), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
@@ -167,8 +166,7 @@ fun EmiCalculatorScreen(
                 border = cardBorder
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
-                    Text(
-                        text = "Official Concessional Scheme Presets",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("official_concessional_scheme_presets"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isDarkMode) GovBluePrimaryDark else GovBlueDark
@@ -217,7 +215,7 @@ fun EmiCalculatorScreen(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                         ) {
-                            Text("Term Loan", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(com.example.ui.i18n.SakshamStrings.get("term_loan"), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
 
                         OutlinedButton(
@@ -231,7 +229,7 @@ fun EmiCalculatorScreen(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                         ) {
-                            Text("Edu Loan", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(com.example.ui.i18n.SakshamStrings.get("edu_loan"), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -252,8 +250,7 @@ fun EmiCalculatorScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            "Loan Amount (ऋण राशि):",
+                        Text(com.example.ui.i18n.SakshamStrings.get("loan_amount_ऋण_राशि"),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -317,8 +314,7 @@ fun EmiCalculatorScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            "Repayment Tenure (पुनर्भुगतान अवधि):",
+                        Text(com.example.ui.i18n.SakshamStrings.get("repayment_tenure_पुनर्भुगतान_अवधि"),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -351,8 +347,7 @@ fun EmiCalculatorScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            "Moratorium Gestation (छूट अवधि):",
+                        Text(com.example.ui.i18n.SakshamStrings.get("moratorium_gestation_छूट_अवधि"),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -410,15 +405,13 @@ fun EmiCalculatorScreen(
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Column {
-                        Text(
-                            text = "How the Moratorium Period Helps You",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("how_the_moratorium_period_helps_you"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = if (isDarkMode) SaffronAccent else GovBlueDark
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "In schemes like NSFDC Term Loan and Dairy Entrepreneurship, you receive up to 12 months moratorium (gestation period). During these first 12 months, you do NOT have to pay loan EMIs.\n\nThis gives you breathing space to purchase milch animals, construct cattle sheds, establish daily milk procurement, and generate healthy cash flows before your repayment schedule begins.",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("in_schemes_like_nsfdc_term_loan_and_dairy_entrepreneurship_you_receive_up_to_12_months_moratorium_gestation_period_during_these_first_12_months_you_do_not_have_to_pay_loan_emis\n\nthis_gives_you_breathing_space_to_purchase_milch_animals_construct_cattle_sheds_establish_daily_milk_procurement_and_generate_healthy_cash_flows_before_your_repayment_schedule_begins"),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 17.sp

@@ -78,17 +78,12 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
 
     if (!isLoggedIn) {
         LoginScreen(
-            onLoginSuccess = { name, phone, email, age, gender, state, district, category, income ->
+            onLoginSuccess = { name, phone, email, age, gender, state, district, category ->
                 viewModel.loginUser(
                     name = name,
                     phone = phone,
-                    email = email,
-                    age = age,
-                    gender = gender,
                     state = state,
-                    district = district,
-                    category = category,
-                    income = income
+                    district = district
                 )
             },
             isDarkMode = isDarkMode

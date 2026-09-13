@@ -115,14 +115,12 @@ fun ActionPlanScreen(
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text(
-                                    text = "AI Business Action Plan",
+                                Text(text = com.example.ui.i18n.SakshamStrings.get("ai_business_action_plan"),
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp
                                 )
-                                Text(
-                                    text = "व्यापार कार्ययोजना एवं मार्गदर्शन",
+                                Text(text = com.example.ui.i18n.SakshamStrings.get("व्यापार_कार्ययोजना_एवं_मार्गदर्शन"),
                                     color = Color.White.copy(alpha = 0.75f),
                                     fontSize = 11.sp
                                 )
@@ -402,8 +400,7 @@ fun ActionPlanScreen(
                             .padding(vertical = 5.dp),
                         verticalAlignment = Alignment.Top
                     ) {
-                        Text(
-                            text = "•",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("•"),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary,
@@ -448,7 +445,7 @@ fun ActionPlanScreen(
                     ) {
                         Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Find Partner", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(com.example.ui.i18n.SakshamStrings.get("find_partner"), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -458,7 +455,7 @@ fun ActionPlanScreen(
                     ) {
                         Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Ask AI Advisor", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(com.example.ui.i18n.SakshamStrings.get("ask_ai_advisor"), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

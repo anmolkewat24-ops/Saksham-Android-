@@ -107,13 +107,13 @@ fun ProfileScreen(
     val context = LocalContext.current
     var showEditDialog by remember { mutableStateOf(false) }
 
-    val name = userProfile?.fullName?.ifBlank { "Beneficiary" } ?: "Beneficiary"
-    val phone = userProfile?.phone?.ifBlank { "Not provided" } ?: "Not provided"
-    val state = userProfile?.state?.ifBlank { "Uttar Pradesh" } ?: "Uttar Pradesh"
-    val district = userProfile?.district?.ifBlank { "Varanasi" } ?: "Varanasi"
-    val category = userProfile?.socialCategory?.ifBlank { "Scheduled Caste (SC)" } ?: "Scheduled Caste (SC)"
-    val income = userProfile?.familyIncome?.ifBlank { "Not specified" } ?: "Not specified"
-    val activeTarget = userProfile?.activeBusinessTarget?.ifBlank { "Not set" } ?: "Not set"
+    val name = userProfile?.fullName ?: "Ramesh Kumar"
+    val phone = userProfile?.phone ?: "+91 98765 43210"
+    val state = userProfile?.state ?: "Uttar Pradesh"
+    val district = userProfile?.district ?: "Varanasi"
+    val category = userProfile?.socialCategory ?: "Scheduled Caste (SC)"
+    val income = userProfile?.familyIncome ?: "₹1.50 - 3.00 Lakh"
+    val activeTarget = userProfile?.activeBusinessTarget ?: "Dairy Farming & Milk Production"
     val photoUri = userProfile?.photoUri
 
     // Zero-permission Android Photo Picker for profile photo
@@ -283,13 +283,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Active Business Target (Editable)
-                    ProfileInfoBox(
-                        label = SakshamStrings.get("profile_business_target", language),
-                        value = activeTarget,
-                        isDarkMode = isDarkMode,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+
                 }
             }
         }
@@ -336,8 +330,7 @@ fun ProfileScreen(
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Text(
-                            text = "Guidelines, document checklist, FAQs & direct contact",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("guidelines_document_checklist_faqs_&_direct_contact"),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -385,8 +378,7 @@ fun ProfileScreen(
                     }
 
                     if (savedSchemes.isEmpty()) {
-                        Text(
-                            text = "No saved schemes yet. Bookmark schemes from the Schemes tab to review them later.",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("no_saved_schemes_yet_bookmark_schemes_from_the_schemes_tab_to_review_them_later"),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 12.dp)
@@ -451,8 +443,7 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Official National Portals",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("official_national_portals"),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -484,8 +475,7 @@ fun ProfileScreen(
                     tint = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Sign Out / Switch User",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("sign_out_switch_user"),
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp
@@ -517,8 +507,7 @@ fun ProfileScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Saksham is a guidance platform and does not guarantee loan approval. Final eligibility, sanction, and disbursement are determined by the concerned government scheme and authorized channel partner.",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_is_a_guidance_platform_and_does_not_guarantee_loan_approval_final_eligibility_sanction_and_disbursement_are_determined_by_the_concerned_government_scheme_and_authorized_channel_partner"),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 16.sp
@@ -536,7 +525,7 @@ fun ProfileScreen(
         var editDistrict by remember { mutableStateOf(district) }
         var editCategory by remember { mutableStateOf(category) }
         var editIncome by remember { mutableStateOf(income) }
-        var editTarget by remember { mutableStateOf(activeTarget) }
+        
 
         var incomeDropdownExpanded by remember { mutableStateOf(false) }
         val incomeOptions = listOf(
@@ -550,8 +539,7 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
             title = {
-                Text(
-                    text = "Update User Profile",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("update_user_profile"),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurface
@@ -565,7 +553,7 @@ fun ProfileScreen(
                     OutlinedTextField(
                         value = editName,
                         onValueChange = { editName = it },
-                        label = { Text("Full Name") },
+                        label = { Text(com.example.ui.i18n.SakshamStrings.get("full_name")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().testTag("edit_name_field")
                     )
@@ -573,7 +561,7 @@ fun ProfileScreen(
                     OutlinedTextField(
                         value = editPhone,
                         onValueChange = { editPhone = it },
-                        label = { Text("Phone Number") },
+                        label = { Text(com.example.ui.i18n.SakshamStrings.get("phone_number")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().testTag("edit_phone_field")
                     )
@@ -585,14 +573,14 @@ fun ProfileScreen(
                         OutlinedTextField(
                             value = editDistrict,
                             onValueChange = { editDistrict = it },
-                            label = { Text("District") },
+                            label = { Text(com.example.ui.i18n.SakshamStrings.get("district")) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = editState,
                             onValueChange = { editState = it },
-                            label = { Text("State") },
+                            label = { Text(com.example.ui.i18n.SakshamStrings.get("state")) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
@@ -606,7 +594,7 @@ fun ProfileScreen(
                         OutlinedTextField(
                             value = editIncome,
                             onValueChange = { editIncome = it },
-                            label = { Text("Family Income (Annual)") },
+                            label = { Text(com.example.ui.i18n.SakshamStrings.get("family_income_annual")) },
                             readOnly = false,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = incomeDropdownExpanded) },
                             modifier = Modifier.fillMaxWidth().menuAnchor().testTag("edit_income_field")
@@ -627,15 +615,7 @@ fun ProfileScreen(
                         }
                     }
 
-                    // Editable Active Business Target
-                    OutlinedTextField(
-                        value = editTarget,
-                        onValueChange = { editTarget = it },
-                        label = { Text("Active Business Target") },
-                        placeholder = { Text("e.g. Dairy Farm, Grocery Store, Apparel") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().testTag("edit_target_field")
-                    )
+
                 }
             },
             confirmButton = {
@@ -647,8 +627,8 @@ fun ProfileScreen(
                             editState.ifBlank { state },
                             editDistrict.ifBlank { district },
                             editCategory,
-                            editIncome,
-                            editTarget
+                            editIncome.ifBlank { income },
+                            ""
                         )
                         showEditDialog = false
                         Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
@@ -656,12 +636,12 @@ fun ProfileScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = GovBluePrimary),
                     modifier = Modifier.testTag("save_profile_button")
                 ) {
-                    Text("Save Changes")
+                    Text(com.example.ui.i18n.SakshamStrings.get("save_changes"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditDialog = false }) {
-                    Text("Cancel")
+                    Text(com.example.ui.i18n.SakshamStrings.get("cancel"))
                 }
             }
         )

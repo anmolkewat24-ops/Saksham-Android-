@@ -157,16 +157,14 @@ fun SakshamTopBar(
                             fontSize = 17.sp,
                             maxLines = 1
                         )
-                        Text(
-                            text = "Saksham Portal • Government of India",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_portal_•_government_of_india"),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
                         )
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "SAKSHAM",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("saksham"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary,
@@ -174,8 +172,7 @@ fun SakshamTopBar(
                                 fontSize = 18.sp
                             )
                         }
-                        Text(
-                            text = "Government Loan & Business Advisor",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("government_loan_&_business_advisor"),
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -247,15 +244,13 @@ fun SakshamTopBar(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
-                Text(
-                    text = "Select Preferred Language / भाषा चुनें",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("select_preferred_language_भाषा_चुनें"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 18.sp
                 )
-                Text(
-                    text = "Choose the language for application guidance & AI advisory",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("choose_the_language_for_application_guidance_&_ai_advisory"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)

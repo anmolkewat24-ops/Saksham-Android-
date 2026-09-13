@@ -29,6 +29,10 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
     private val dao = db.sakshamDao()
     private val aiService = GeminiAdvisorService()
 
+    // Authentication session state
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
     // Language state
     private val _selectedLanguage = MutableStateFlow("English")
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
@@ -96,7 +100,7 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val userProfile: StateFlow<UserProfileEntity?> = dao.getUserProfile()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UserProfileEntity(isLoggedIn = false))
 
     fun setLanguage(lang: String) {
         _selectedLanguage.value = lang
@@ -298,6 +302,39 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         _isDarkMode.value = enabled
     }
 
+    fun registerAndLoginUser(
+        fullName: String,
+        phone: String,
+        email: String,
+        age: String,
+        gender: String,
+        state: String,
+        district: String,
+        socialCategory: String,
+        familyIncome: String = "₹1.50 - 3.00 Lakh"
+    ) {
+        _isLoggedIn.value = true
+        viewModelScope.launch {
+            val current = userProfile.value
+            val updated = (current ?: UserProfileEntity(id = 1)).copy(
+                id = 1,
+                fullName = fullName.trim(),
+                phone = if (phone.trim().startsWith("+91")) phone.trim() else "+91 ${phone.trim()}",
+                email = email.trim(),
+                age = age.trim().toIntOrNull() ?: 0,
+                gender = gender.trim(),
+                state = state.trim(),
+                district = district.trim(),
+                socialCategory = socialCategory.trim(),
+                familyIncome = familyIncome.trim(),
+                selectedLanguage = _selectedLanguage.value,
+                activeBusinessTarget = current?.activeBusinessTarget?.ifBlank { "Dairy Farming & Milk Production" } ?: "Dairy Farming & Milk Production",
+                isLoggedIn = true
+            )
+            dao.updateUserProfile(updated)
+        }
+    }
+
     fun updateProfileInfo(
         name: String,
         phone: String,
@@ -306,24 +343,19 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         category: String,
         income: String,
         activeBusinessTarget: String = "",
-        photoUri: String? = null,
-        email: String = "",
-        age: Int = 0,
-        gender: String = ""
+        photoUri: String? = null
     ) {
+        _isLoggedIn.value = true
         viewModelScope.launch {
             val current = userProfile.value
             val updated = (current ?: UserProfileEntity(id = 1)).copy(
-                fullName = name,
-                phone = phone,
-                email = if (email.isNotBlank()) email else (current?.email ?: ""),
-                age = if (age > 0) age else (current?.age ?: 0),
-                gender = if (gender.isNotBlank()) gender else (current?.gender ?: ""),
-                state = state,
-                district = district,
-                socialCategory = category,
-                familyIncome = income,
-                activeBusinessTarget = activeBusinessTarget.ifBlank { current?.activeBusinessTarget ?: "" },
+                fullName = name.trim(),
+                phone = phone.trim(),
+                state = state.trim(),
+                district = district.trim(),
+                socialCategory = category.trim(),
+                familyIncome = income.trim(),
+                activeBusinessTarget = activeBusinessTarget.ifBlank { current?.activeBusinessTarget ?: "Dairy Farming & Milk Production" },
                 photoUri = photoUri ?: current?.photoUri,
                 selectedLanguage = _selectedLanguage.value,
                 isLoggedIn = true
@@ -340,31 +372,16 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun loginUser(
-        name: String,
-        phone: String,
-        email: String = "",
-        age: Int = 0,
-        gender: String = "",
-        state: String = "Uttar Pradesh",
-        district: String = "Varanasi",
-        category: String = "Scheduled Caste (SC)",
-        income: String = ""
-    ) {
+    fun loginUser(name: String, phone: String, state: String = "Uttar Pradesh", district: String = "Varanasi") {
+        _isLoggedIn.value = true
         viewModelScope.launch {
             val current = userProfile.value
             val updated = (current ?: UserProfileEntity(id = 1)).copy(
-                fullName = name,
-                phone = phone,
-                email = email,
-                age = age,
-                gender = gender,
-                state = state,
-                district = district,
-                socialCategory = if (category.isNotBlank()) category else (current?.socialCategory ?: "Scheduled Caste (SC)"),
-                familyIncome = income,
-                activeBusinessTarget = current?.activeBusinessTarget ?: "",
-                selectedLanguage = _selectedLanguage.value,
+                id = 1,
+                fullName = name.trim(),
+                phone = if (phone.trim().startsWith("+91")) phone.trim() else "+91 ${phone.trim()}",
+                state = state.trim(),
+                district = district.trim(),
                 isLoggedIn = true
             )
             dao.updateUserProfile(updated)
@@ -372,6 +389,7 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun logoutUser() {
+        _isLoggedIn.value = false
         viewModelScope.launch {
             val current = userProfile.value
             val updated = (current ?: UserProfileEntity(id = 1)).copy(isLoggedIn = false)

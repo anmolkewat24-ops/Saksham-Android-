@@ -234,14 +234,12 @@ fun BusinessFormScreen(
                     border = cardBorder
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "What type of business do you want to start or grow?",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("what_type_of_business_do_you_want_to_start_or_grow"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Text(
-                            text = "आप किस प्रकार का व्यवसाय शुरू या विस्तारित करना चाहते हैं?",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("आप_किस_प्रकार_का_व्यवसाय_शुरू_या_विस्तारित_करना_चाहते_हैं"),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -298,8 +296,7 @@ fun BusinessFormScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // New vs Existing Business
-                        Text(
-                            text = "Is this a new or existing business?",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("is_this_a_new_or_existing_business"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -329,8 +326,7 @@ fun BusinessFormScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Location Type
-                        Text(
-                            text = "Business Location Type",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("business_location_type"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -368,22 +364,19 @@ fun BusinessFormScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         if (isDairy) {
-                            Text(
-                                text = "Dairy Business Setup Plan 🐄",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("dairy_business_setup_plan_🐄"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                text = "विशिष्ट डेयरी योजना: पशुओं की संख्या व बुनियादी ढांचा",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("विशिष्ट_डेयरी_योजना_पशुओं_की_संख्या_व_बुनियादी_ढांचा"),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 14.dp)
                             )
 
                             // Animal Count Selection
-                            Text(
-                                text = "How many milch animals (cows/buffaloes) are you planning for?",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("how_many_milch_animals_cowsbuffaloes_are_you_planning_for"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -413,8 +406,7 @@ fun BusinessFormScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             // Land / Shed Status
-                            Text(
-                                text = "Available Land & Shed Status",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("available_land_&_shed_status"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -439,8 +431,7 @@ fun BusinessFormScreen(
                             Spacer(modifier = Modifier.height(14.dp))
 
                             // Resources Checklist
-                            Text(
-                                text = "Essential Infrastructure Checklist",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("essential_infrastructure_checklist"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -454,8 +445,8 @@ fun BusinessFormScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Water & Electricity Available?", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("80-100 L per animal / day", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(com.example.ui.i18n.SakshamStrings.get("water_&_electricity_available"), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                                    Text(com.example.ui.i18n.SakshamStrings.get("80_100_l_per_animal_day"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(
                                     checked = dairyWaterElectricity,
@@ -472,8 +463,8 @@ fun BusinessFormScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Milk Collection / Cooperative Nearby?", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("Within 3-5 km for easy daily sale", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(com.example.ui.i18n.SakshamStrings.get("milk_collection_cooperative_nearby"), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                                    Text(com.example.ui.i18n.SakshamStrings.get("within_3_5_km_for_easy_daily_sale"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(
                                     checked = dairyMilkCollectionCenter,
@@ -483,21 +474,18 @@ fun BusinessFormScreen(
                             }
                         } else {
                             // Non-dairy specific questions
-                            Text(
-                                text = "Experience & Planned Employees",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("experience_&_planned_employees"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                text = "कार्य अनुभव एवं अनुमानित रोजगार सृजन",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("कार्य_अनुभव_एवं_अनुमानित_रोजगार_सृजन"),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 14.dp)
                             )
 
-                            Text(
-                                text = "Your Experience in this Business Field",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("your_experience_in_this_business_field"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -517,8 +505,7 @@ fun BusinessFormScreen(
 
                             Spacer(modifier = Modifier.height(14.dp))
 
-                            Text(
-                                text = "How many people do you plan to employ?",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("how_many_people_do_you_plan_to_employ"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -552,14 +539,12 @@ fun BusinessFormScreen(
                     border = cardBorder
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Investment & Capital Requirements",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("investment_&_capital_requirements"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Text(
-                            text = "परियोजना लागत, स्वयं का निवेश एवं आवश्यक ऋण",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("परियोजना_लागत_स्वयं_का_निवेश_एवं_आवश्यक_ऋण"),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 14.dp)
@@ -570,7 +555,7 @@ fun BusinessFormScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Estimated Total Project Cost:", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                            Text(com.example.ui.i18n.SakshamStrings.get("estimated_total_project_cost"), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                             Text(
                                 "₹%,d".format(totalInvestment.toLong()),
                                 fontSize = 15.sp,
@@ -620,7 +605,7 @@ fun BusinessFormScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Your Own Investment (Capital):", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                            Text(com.example.ui.i18n.SakshamStrings.get("your_own_investment_capital"), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                             Text(
                                 "₹%,d (%.0f%%)".format(ownCapital.toLong(), (ownCapital / totalInvestment * 100)),
                                 fontSize = 14.sp,
@@ -654,8 +639,7 @@ fun BusinessFormScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text(
-                                        text = "Government Loan Required:",
+                                    Text(text = com.example.ui.i18n.SakshamStrings.get("government_loan_required"),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -678,8 +662,7 @@ fun BusinessFormScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Annual Family Income
-                        Text(
-                            text = "Annual Family Income (वार्षिक पारिवारिक आय)",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("annual_family_income_वार्षिक_पारिवारिक_आय"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -718,15 +701,13 @@ fun BusinessFormScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Ready for Scheme Matchmaking",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("ready_for_scheme_matchmaking"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        Text(
-                            text = "Review your details. Our AI will analyze your plan against official NSFDC & Government scheme rules.",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("review_your_details_our_ai_will_analyze_your_plan_against_official_nsfdc_&_government_scheme_rules"),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
@@ -794,7 +775,7 @@ fun BusinessFormScreen(
                     ) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Back (पिछला)")
+                        Text(com.example.ui.i18n.SakshamStrings.get("back_पिछला"))
                     }
                 }
 

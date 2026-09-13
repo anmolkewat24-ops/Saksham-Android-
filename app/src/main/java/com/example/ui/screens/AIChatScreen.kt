@@ -1,5 +1,12 @@
 package com.example.ui.screens
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.IconButtonDefaults
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -48,7 +55,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -151,8 +157,7 @@ fun AIChatScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Saksham Saathi (सक्षम साथी)",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_saathi_सक्षम_साथी"),
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
                             fontSize = 15.sp
@@ -165,8 +170,7 @@ fun AIChatScreen(
                             modifier = Modifier.size(14.dp)
                         )
                     }
-                    Text(
-                        text = "Official NSFDC & Govt Concessional Advisor • 24/7 AI",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("official_nsfdc_&_govt_concessional_advisor_•_247_ai"),
                         color = Color.White.copy(alpha = 0.85f),
                         fontSize = 11.sp
                     )
@@ -267,8 +271,7 @@ fun AIChatScreen(
                     value = inputText,
                     onValueChange = { inputText = it },
                     placeholder = {
-                        Text(
-                            text = "Ask about loans, cattle, rates, documents...",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("ask_about_loans_cattle_rates_documents"),
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -371,15 +374,13 @@ fun ModernChatMessageItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(bottom = 3.dp, start = 2.dp)
                 ) {
-                    Text(
-                        text = "Saksham Saathi",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_saathi"),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isDarkMode) GovBluePrimaryDark else GovBlueDark
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "• Official Advisor",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("•_official_advisor"),
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -422,10 +423,28 @@ fun ModernChatMessageItem(
                         lineHeight = 20.sp
                     )
                 } else {
-                    FormattedAiResponse(
-                        rawText = message.text,
-                        isDarkMode = isDarkMode
-                    )
+                    Column {
+                        FormattedAiResponse(
+                            rawText = message.text,
+                            isDarkMode = isDarkMode
+                        )
+                        
+                        val clipboardManager = LocalClipboardManager.current
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = { 
+                                clipboardManager.setText(buildAnnotatedString { append(message.text) })
+                                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                            }, modifier = Modifier.size(24.dp)) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = GovBluePrimary, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
                 }
             }
 
@@ -483,8 +502,7 @@ fun ModernChatMessageItem(
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "➔ ",
+                                Text(text = com.example.ui.i18n.SakshamStrings.get("➔"),
                                     color = SaffronAccent,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
@@ -539,6 +557,15 @@ fun FormattedAiResponse(
                 trimmed.isBlank() -> {
                     Spacer(modifier = Modifier.height(2.dp))
                 }
+                trimmed == "---" || trimmed == "***" -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    )
+                }
                 // Headings (starts with ** or emojis or #)
                 trimmed.startsWith("**") && trimmed.endsWith("**") -> {
                     val headingText = trimmed.removeSurrounding("**")
@@ -550,13 +577,14 @@ fun FormattedAiResponse(
                         modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
                     )
                 }
-                trimmed.startsWith("###") -> {
+                trimmed.startsWith("###") || trimmed.startsWith("##") -> {
+                    val headingText = trimmed.removePrefix("###").removePrefix("##").trim().replace("**", "")
                     Text(
-                        text = trimmed.removePrefix("###").trim(),
+                        text = headingText,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isDarkMode) GovBluePrimaryDark else GovBlueDark,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+                        modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
                     )
                 }
                 trimmed.startsWith("💡") || trimmed.startsWith("Tip:") || trimmed.startsWith("सलाह:") -> {
@@ -677,8 +705,7 @@ fun ModernTypingIndicator(isDarkMode: Boolean) {
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Saksham Saathi is analyzing",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_saathi_is_analyzing"),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium

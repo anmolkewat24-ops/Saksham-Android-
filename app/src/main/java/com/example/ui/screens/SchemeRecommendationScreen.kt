@@ -124,8 +124,7 @@ fun SchemeRecommendationScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Personalized Scheme Matches",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("personalized_scheme_matches"),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
@@ -139,8 +138,7 @@ fun SchemeRecommendationScreen(
                                 .background(GrowthGreen)
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
-                            Text(
-                                text = "NSFDC Verified",
+                            Text(text = com.example.ui.i18n.SakshamStrings.get("nsfdc_verified"),
                                 color = Color.White,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
@@ -151,13 +149,12 @@ fun SchemeRecommendationScreen(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "Target: ${profile.businessType} (₹${"%,d".format(profile.loanRequired)} Loan Required)",
+                        text = "Target: ${profile.businessType} (₹%,d Loan Required)".format(profile.loanRequired),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = "Matched against government concessional interest rates, moratorium criteria, and social category.",
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("matched_against_government_concessional_interest_rates_moratorium_criteria_and_social_category"),
                         color = Color.White.copy(alpha = 0.85f),
                         fontSize = 12.sp,
                         lineHeight = 16.sp,
@@ -174,8 +171,7 @@ fun SchemeRecommendationScreen(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "View Step-by-Step AI Guidance Plan ➔",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("view_step_by_step_ai_guidance_plan_➔"),
                             color = if (isDarkMode) Color.Black else GovBluePrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
@@ -230,8 +226,7 @@ fun SchemeRecommendationScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "RECOMMENDED SCHEME (सर्वोत्तम अनुशंसित योजना)",
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("recommended_scheme_सर्वोत्तम_अनुशंसित_योजना"),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = SaffronAccent,
@@ -399,7 +394,7 @@ fun SchemeCard(
                     .padding(10.dp)
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Max Loan Amount", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("max_loan_amount"), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = scheme.maxLoanAmountDisplay,
                         fontSize = 13.sp,
@@ -408,7 +403,7 @@ fun SchemeCard(
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Interest Rate", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = com.example.ui.i18n.SakshamStrings.get("interest_rate"), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = scheme.interestRateDisplay,
                         fontSize = 13.sp,
@@ -422,8 +417,7 @@ fun SchemeCard(
 
             // Suitable Purpose
             Row(verticalAlignment = Alignment.Top) {
-                Text(
-                    text = "Suitable for: ",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("suitable_for"),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -440,8 +434,7 @@ fun SchemeCard(
 
             // Basic Eligibility
             Row(verticalAlignment = Alignment.Top) {
-                Text(
-                    text = "Eligibility: ",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("eligibility"),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -467,8 +460,7 @@ fun SchemeCard(
                     containerColor = if (isHighlighted) GovBluePrimary else if (isDarkMode) Color(0xFF2563EB) else GovBlueDark
                 )
             ) {
-                Text(
-                    text = "View Complete Details (विस्तृत जानकारी)",
+                Text(text = com.example.ui.i18n.SakshamStrings.get("view_complete_details_विस्तृत_जानकारी"),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
