@@ -1,0 +1,6 @@
+{
+  "name": "Saksham",
+  "description": "Clean, trustworthy government loan schemes, business guidance, EMI calculator, and partner locator app for entrepreneurs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
