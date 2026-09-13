@@ -1,5 +1,6 @@
 package com.example.data.api
 
+import android.util.Log
 import com.example.BuildConfig
 import com.example.data.model.BusinessProfile
 import com.example.data.model.ChatMessage
@@ -78,12 +79,12 @@ class GeminiAdvisorService {
     ): String {
         return withContext(Dispatchers.IO) {
             if (!isValidKey(apiKey)) {
+                Log.w("GeminiAdvisorService", "No valid Gemini API key found, using offline fallback.")
                 return@withContext getOfflineVerifiedAdvice(userPrompt, profile, language)
             }
 
             try {
-                // Using Gemini 3.5 Flash as required by system standards.
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${'$'}apiKey"
+                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$apiKey"
 
                 val jsonBody = JSONObject()
                 val contentsArray = JSONArray()
@@ -92,16 +93,16 @@ class GeminiAdvisorService {
                 val contextInfo = if (profile != null) {
                     """
                     [SYSTEM NOTE: User Profile Data (Use this for context)]
-                    • Business Focus: ${'$'}{profile.businessType} (${'$'}{if (profile.isExistingBusiness) "Existing" else "New Greenfield Startup"})
-                    • Location: ${'$'}{profile.locationType} area (${'$'}{profile.district}, ${'$'}{profile.state})
-                    • Estimated Project Cost: ₹${'$'}{profile.totalInvestment}
-                    • Promoter Equity: ₹${'$'}{profile.ownCapital} | Loan Required: ₹${'$'}{profile.loanRequired}
-                    • Annual Family Income: ${'$'}{profile.annualFamilyIncome} | Experience: ${'$'}{profile.businessExperience}
-                    • Cattle Scale (if dairy): ${'$'}{profile.dairyAnimalCount} cows/buffaloes, ${'$'}{profile.dairyLandAvailable}
-                    • Preferred Language: ${'$'}language
+                    • Business Focus: ${profile.businessType} (${if (profile.isExistingBusiness) "Existing" else "New Greenfield Startup"})
+                    • Location: ${profile.locationType} area (${profile.district}, ${profile.state})
+                    • Estimated Project Cost: ₹${profile.totalInvestment}
+                    • Promoter Equity: ₹${profile.ownCapital} | Loan Required: ₹${profile.loanRequired}
+                    • Annual Family Income: ${profile.annualFamilyIncome} | Experience: ${profile.businessExperience}
+                    • Cattle Scale (if dairy): ${profile.dairyAnimalCount} cows/buffaloes, ${profile.dairyLandAvailable}
+                    • Preferred Language: $language
                     """.trimIndent() + "\n\n"
                 } else {
-                    "[SYSTEM NOTE: Preferred Language: ${'$'}language]\n\n"
+                    "[SYSTEM NOTE: Preferred Language: $language]\n\n"
                 }
 
                 if (chatHistory.isEmpty()) {
@@ -158,17 +159,26 @@ class GeminiAdvisorService {
                         val content = firstCandidate.optJSONObject("content")
                         val parts = content?.optJSONArray("parts")
                         if (parts != null && parts.length() > 0) {
-                            val responseText = parts.getJSONObject(0).optString("text", "")
+                            val sb = StringBuilder()
+                            for (i in 0 until parts.length()) {
+                                val txt = parts.getJSONObject(i).optString("text", "")
+                                if (txt.isNotBlank()) sb.append(txt)
+                            }
+                            val responseText = sb.toString()
                             if (responseText.isNotBlank()) {
+                                Log.d("GeminiAdvisorService", "Gemini API success response received")
                                 return@withContext responseText
                             }
                         }
                     }
+                } else {
+                    Log.e("GeminiAdvisorService", "Gemini API HTTP Error Code ${response.code}: $responseBodyStr")
                 }
                 
                 // Fallback
                 getOfflineVerifiedAdvice(userPrompt, profile, language)
             } catch (e: Exception) {
+                Log.e("GeminiAdvisorService", "Gemini API Exception", e)
                 getOfflineVerifiedAdvice(userPrompt, profile, language)
             }
         }
