@@ -89,6 +89,10 @@ import com.example.ui.theme.SaffronLight
 import com.example.ui.theme.SlateBorder
 import com.example.ui.theme.SlateLight
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.ime
+
 @Composable
 fun AIChatScreen(
     messages: List<ChatMessage>,
@@ -112,7 +116,10 @@ fun AIChatScreen(
         )
     }
 
-    LaunchedEffect(messages.size, isAiThinking) {
+    val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+    val isKeyboardOpen = imeBottom > 0.dp
+
+    LaunchedEffect(messages.size, isAiThinking, isKeyboardOpen) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
@@ -122,7 +129,6 @@ fun AIChatScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .navigationBarsPadding()
             .imePadding()
             .testTag("ai_chat_screen")
     ) {
@@ -135,12 +141,12 @@ fun AIChatScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = if (isKeyboardOpen) 6.dp else 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(if (isKeyboardOpen) 30.dp else 38.dp)
                         .clip(CircleShape)
                         .background(if (isDarkMode) Color(0xFF334155) else GovBlueContainer),
                     contentAlignment = Alignment.Center
@@ -149,38 +155,40 @@ fun AIChatScreen(
                         imageVector = Icons.Default.AutoAwesome,
                         contentDescription = null,
                         tint = if (isDarkMode) SaffronAccent else GovBluePrimary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(if (isKeyboardOpen) 16.dp else 20.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_saathi_सक्षम_साथी"),
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("saksham_saathi_सक्षम_साथी", language),
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
-                            fontSize = 15.sp
+                            fontSize = if (isKeyboardOpen) 13.sp else 15.sp
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Verified",
                             tint = GrowthGreen,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(13.dp)
                         )
                     }
-                    Text(text = com.example.ui.i18n.SakshamStrings.get("official_nsfdc_&_govt_concessional_advisor_•_247_ai"),
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 11.sp
-                    )
+                    if (!isKeyboardOpen) {
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("official_nsfdc_&_govt_concessional_advisor_•_247_ai", language),
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 11.sp
+                        )
+                    }
                 }
 
                 // National Flag tricolor pill
                 Row(
                     modifier = Modifier
-                        .height(14.dp)
-                        .width(28.dp)
+                        .height(12.dp)
+                        .width(24.dp)
                         .clip(RoundedCornerShape(3.dp))
                 ) {
                     Box(modifier = Modifier.weight(1f).fillMaxSize().background(SaffronAccent))
@@ -215,42 +223,48 @@ fun AIChatScreen(
             }
         }
 
-        // Suggested Contextual Prompts Carousel
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        // Suggested Contextual Prompts Carousel (Hide when keyboard is open to maximize message space)
+        AnimatedVisibility(
+            visible = !isKeyboardOpen,
+            enter = fadeIn(),
+            exit = fadeOut()
         ) {
-            items(quickTopicChips) { chipText ->
-                val promptQuery = when {
-                    chipText.contains("Dairy") -> "I want to start a dairy farm with 4 cows"
-                    chipText.contains("Document") -> "What documents do I need for NSFDC loan?"
-                    chipText.contains("MSY") -> "Tell me about Mahila Samriddhi 4% interest rate"
-                    chipText.contains("Moratorium") -> "How does the 12-month moratorium work?"
-                    chipText.contains("Partner") -> "Where is the nearest State Channel Partner bank?"
-                    chipText.contains("Education") -> "What are the rules for NSFDC education loan?"
-                    else -> chipText
-                }
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(quickTopicChips) { chipText ->
+                    val promptQuery = when {
+                        chipText.contains("Dairy") -> "I want to start a dairy farm with 4 cows"
+                        chipText.contains("Document") -> "What documents do I need for NSFDC loan?"
+                        chipText.contains("MSY") -> "Tell me about Mahila Samriddhi 4% interest rate"
+                        chipText.contains("Moratorium") -> "How does the 12-month moratorium work?"
+                        chipText.contains("Partner") -> "Where is the nearest State Channel Partner bank?"
+                        chipText.contains("Education") -> "What are the rules for NSFDC education loan?"
+                        else -> chipText
+                    }
 
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF1F5F9))
-                        .border(
-                            1.dp,
-                            if (isDarkMode) Color(0xFF334155) else GovBluePrimary.copy(alpha = 0.25f),
-                            RoundedCornerShape(20.dp)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF1F5F9))
+                            .border(
+                                1.dp,
+                                if (isDarkMode) Color(0xFF334155) else GovBluePrimary.copy(alpha = 0.25f),
+                                RoundedCornerShape(20.dp)
+                            )
+                            .clickable { onSendMessage(promptQuery) }
+                            .padding(horizontal = 12.dp, vertical = 7.dp)
+                    ) {
+                        Text(
+                            text = chipText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary
                         )
-                        .clickable { onSendMessage(promptQuery) }
-                        .padding(horizontal = 12.dp, vertical = 7.dp)
-                ) {
-                    Text(
-                        text = chipText,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary
-                    )
+                    }
                 }
             }
         }
@@ -271,7 +285,7 @@ fun AIChatScreen(
                     value = inputText,
                     onValueChange = { inputText = it },
                     placeholder = {
-                        Text(text = com.example.ui.i18n.SakshamStrings.get("ask_about_loans_cattle_rates_documents"),
+                        Text(text = com.example.ui.i18n.SakshamStrings.get("ask_about_loans_cattle_rates_documents", language),
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
