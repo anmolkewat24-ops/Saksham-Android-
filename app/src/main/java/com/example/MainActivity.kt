@@ -73,8 +73,8 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
     val emiTenure by viewModel.emiTenureYears.collectAsState()
     val emiMoratorium by viewModel.emiMoratoriumMonths.collectAsState()
 
-    // Check if user is logged in
-    val isLoggedIn = userProfile?.isLoggedIn ?: true
+    // Check if user is logged in (strictly true only when authenticated)
+    val isLoggedIn = userProfile?.isLoggedIn == true
 
     if (!isLoggedIn) {
         LoginScreen(

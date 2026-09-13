@@ -162,27 +162,59 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         if (promptText.isBlank()) return
 
         val userMsg = ChatMessage(text = promptText, isUser = true)
-        _chatMessages.value = _chatMessages.value + userMsg
+        val currentHistory = _chatMessages.value
+        _chatMessages.value = currentHistory + userMsg
         _isAiThinking.value = true
 
         viewModelScope.launch {
             val responseText = aiService.getAdvice(
                 userPrompt = promptText,
                 profile = _businessProfile.value,
-                language = _selectedLanguage.value
+                language = _selectedLanguage.value,
+                chatHistory = currentHistory
             )
 
-            val suggestedPrompts = if (promptText.contains("dairy", ignoreCase = true)) {
-                listOf(
-                    "What documents do I need for a 4-cow unit?",
-                    "Can I get a 12-month moratorium?",
-                    "How to apply via UPSCFDC District Office?"
+            val p = promptText.lowercase()
+            val suggestedPrompts = when {
+                p.contains("document") || p.contains("dastavez") || p.contains("paper") || p.contains("कागज") -> listOf(
+                    "How to get digital SC caste certificate?",
+                    "What is the family income ceiling?",
+                    "Where is the nearest Vikas Bhavan office?"
                 )
-            } else {
-                listOf(
-                    "How do I apply for the NSFDC Term Loan?",
-                    "What are the interest rates for women?",
-                    "Show nearby authorized partner banks"
+                p.contains("interest") || p.contains("byaj") || p.contains("rate") || p.contains("subsidy") || p.contains("ब्याज") -> listOf(
+                    "Tell me about Mahila Samriddhi 4% rate",
+                    "How does the 35% PMEGP capital subsidy work?",
+                    "How does the 12-month moratorium work?"
+                )
+                p.contains("moratorium") || p.contains("chhut") || p.contains("gestation") || p.contains("किस्त") -> listOf(
+                    "When does my first principal EMI start?",
+                    "Calculate exact monthly installment in Calculator",
+                    "What are the interest rates for women?"
+                )
+                p.contains("dairy") || p.contains("cow") || p.contains("buffalo") || p.contains("गाय") || p.contains("भैंस") -> listOf(
+                    "How to sell milk to cooperatives at best price?",
+                    "What is the daily green fodder requirement?",
+                    "What documents do I need for a 4-cow unit?"
+                )
+                p.contains("market") || p.contains("sell") || p.contains("bechna") || p.contains("customer") -> listOf(
+                    "How much profit in making paneer & ghee?",
+                    "How to tie up with Amul or local cooperative?",
+                    "What is the required investment for equipment?"
+                )
+                p.contains("woman") || p.contains("women") || p.contains("mahila") || p.contains("महिला") -> listOf(
+                    "Can self-help groups (SHGs) apply together?",
+                    "Is promoter equity zero in Mahila Samriddhi?",
+                    "What documents do women entrepreneurs need?"
+                )
+                p.contains("education") || p.contains("study") || p.contains("college") || p.contains("पढ़ाई") -> listOf(
+                    "What is the loan limit for studies abroad?",
+                    "Is interest 3.5% for girl students?",
+                    "When does repayment start after graduation?"
+                )
+                else -> listOf(
+                    "What documents do I need for NSFDC loan?",
+                    "Which scheme offers lowest interest rate?",
+                    "Where is the nearest State Channel Partner?"
                 )
             }
 
