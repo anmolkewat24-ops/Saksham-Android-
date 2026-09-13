@@ -96,13 +96,15 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val userProfile: StateFlow<UserProfileEntity?> = dao.getUserProfile()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserProfileEntity())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun setLanguage(lang: String) {
         _selectedLanguage.value = lang
         viewModelScope.launch {
-            val curr = userProfile.value ?: UserProfileEntity()
-            dao.updateUserProfile(curr.copy(selectedLanguage = lang))
+            val curr = userProfile.value
+            if (curr != null) {
+                dao.updateUserProfile(curr.copy(selectedLanguage = lang))
+            }
         }
     }
 
@@ -304,18 +306,24 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         category: String,
         income: String,
         activeBusinessTarget: String = "",
-        photoUri: String? = null
+        photoUri: String? = null,
+        email: String = "",
+        age: Int = 0,
+        gender: String = ""
     ) {
         viewModelScope.launch {
             val current = userProfile.value
             val updated = (current ?: UserProfileEntity(id = 1)).copy(
                 fullName = name,
                 phone = phone,
+                email = if (email.isNotBlank()) email else (current?.email ?: ""),
+                age = if (age > 0) age else (current?.age ?: 0),
+                gender = if (gender.isNotBlank()) gender else (current?.gender ?: ""),
                 state = state,
                 district = district,
                 socialCategory = category,
                 familyIncome = income,
-                activeBusinessTarget = activeBusinessTarget.ifBlank { current?.activeBusinessTarget ?: "Dairy Farming & Milk Production" },
+                activeBusinessTarget = activeBusinessTarget.ifBlank { current?.activeBusinessTarget ?: "Dairy Farm (4 Cattle)" },
                 photoUri = photoUri ?: current?.photoUri,
                 selectedLanguage = _selectedLanguage.value,
                 isLoggedIn = true
@@ -332,14 +340,28 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun loginUser(name: String, phone: String, state: String = "Uttar Pradesh", district: String = "Varanasi") {
+    fun loginUser(
+        name: String,
+        phone: String,
+        email: String = "",
+        age: Int = 0,
+        gender: String = "",
+        state: String = "Uttar Pradesh",
+        district: String = "Varanasi",
+        category: String = "Scheduled Caste (SC)"
+    ) {
         viewModelScope.launch {
             val current = userProfile.value
             val updated = (current ?: UserProfileEntity(id = 1)).copy(
                 fullName = name,
                 phone = phone,
+                email = email,
+                age = age,
+                gender = gender,
                 state = state,
                 district = district,
+                socialCategory = if (category.isNotBlank()) category else (current?.socialCategory ?: "Scheduled Caste (SC)"),
+                selectedLanguage = _selectedLanguage.value,
                 isLoggedIn = true
             )
             dao.updateUserProfile(updated)

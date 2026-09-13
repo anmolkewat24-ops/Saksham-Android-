@@ -107,13 +107,13 @@ fun ProfileScreen(
     val context = LocalContext.current
     var showEditDialog by remember { mutableStateOf(false) }
 
-    val name = userProfile?.fullName ?: "Ramesh Kumar"
-    val phone = userProfile?.phone ?: "+91 98765 43210"
-    val state = userProfile?.state ?: "Uttar Pradesh"
-    val district = userProfile?.district ?: "Varanasi"
-    val category = userProfile?.socialCategory ?: "Scheduled Caste (SC)"
-    val income = userProfile?.familyIncome ?: "₹1.50 - 3.00 Lakh"
-    val activeTarget = userProfile?.activeBusinessTarget ?: "Dairy Farming & Milk Production"
+    val name = userProfile?.fullName?.ifBlank { "Beneficiary" } ?: "Beneficiary"
+    val phone = userProfile?.phone?.ifBlank { "Not provided" } ?: "Not provided"
+    val state = userProfile?.state?.ifBlank { "Uttar Pradesh" } ?: "Uttar Pradesh"
+    val district = userProfile?.district?.ifBlank { "Varanasi" } ?: "Varanasi"
+    val category = userProfile?.socialCategory?.ifBlank { "Scheduled Caste (SC)" } ?: "Scheduled Caste (SC)"
+    val income = userProfile?.familyIncome?.ifBlank { "₹1.50 - 3.00 Lakh" } ?: "₹1.50 - 3.00 Lakh"
+    val activeTarget = userProfile?.activeBusinessTarget?.ifBlank { "Dairy Farm (4 Cattle)" } ?: "Dairy Farm (4 Cattle)"
     val photoUri = userProfile?.photoUri
 
     // Zero-permission Android Photo Picker for profile photo

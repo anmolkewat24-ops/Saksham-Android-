@@ -47,11 +47,14 @@ data class SavedPartnerEntity(
 @Entity(tableName = "user_profile")
 data class UserProfileEntity(
     @PrimaryKey val id: Int = 1,
-    val fullName: String = "Ramesh Kumar",
-    val phone: String = "+91 98765 43210",
-    val state: String = "Uttar Pradesh",
-    val district: String = "Varanasi",
-    val socialCategory: String = "Scheduled Caste (SC)",
+    val fullName: String = "",
+    val phone: String = "",
+    val email: String = "",
+    val age: Int = 0,
+    val gender: String = "",
+    val state: String = "",
+    val district: String = "",
+    val socialCategory: String = "",
     val familyIncome: String = "₹1.50 - 3.00 Lakh",
     val selectedLanguage: String = "English",
     val photoUri: String? = null,
@@ -112,7 +115,7 @@ interface SakshamDao {
         SavedPartnerEntity::class,
         UserProfileEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class SakshamDatabase : RoomDatabase() {
