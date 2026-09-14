@@ -266,78 +266,33 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
             dao.updateAdminSettings(AdminSettingsEntity())
         }
 
-        // Unconditionally synchronize and test actual working keys from environment configuration (BuildConfig) on startup
-        synchronizeAndTestEnvironmentKeys()
-    }
-
-    private suspend fun synchronizeAndTestEnvironmentKeys() {
+        // Seed Gemini API Keys if empty
         val existingKeys = dao.getGeminiApiKeys().first()
-
-        val primaryVal = try { com.example.BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
-        val fallbackVal = try {
-            com.example.BuildConfig::class.java.getField("GEMINI_API_KEY_1").get(null) as? String ?: ""
-        } catch (e: Throwable) {
-            ""
-        }
-        val backupVal = try {
-            com.example.BuildConfig::class.java.getField("GEMINI_API_KEY_2").get(null) as? String ?: ""
-        } catch (e: Throwable) {
-            ""
-        }
-
-        val hasAnyValidBuildConfigKey = KeySecurityUtil.isValidKey(primaryVal) || 
-                                        KeySecurityUtil.isValidKey(fallbackVal) || 
-                                        KeySecurityUtil.isValidKey(backupVal)
-
         if (existingKeys.isEmpty()) {
-            if (hasAnyValidBuildConfigKey) {
-                // First application launch & we have valid BuildConfig keys -> Seeding them safely
-                if (KeySecurityUtil.isValidKey(primaryVal)) {
-                    val entity = GeminiApiKeyEntity(
-                        id = "key_primary_seeded",
-                        name = "Primary Production Key (Seeded)",
-                        encryptedKey = KeySecurityUtil.encryptKey(primaryVal),
-                        maskedKey = KeySecurityUtil.maskKey(primaryVal),
-                        isPrimary = true,
-                        isEnabled = true,
-                        status = "Untested",
-                        lastError = "Awaiting verification on startup",
-                        createdAt = System.currentTimeMillis()
-                    )
-                    dao.insertGeminiApiKey(entity)
-                }
+            val envKey = try {
+                val k1 = System.getenv("GEMINI_API_KEY_1")
+                val k2 = System.getenv("GEMINI_API_KEY")
+                val k3 = try { com.example.BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
+                listOf(k1, k2, k3).firstOrNull { KeySecurityUtil.isValidKey(it) } ?: ""
+            } catch (e: Throwable) {
+                ""
+            }
 
-                if (KeySecurityUtil.isValidKey(fallbackVal)) {
-                    val entity = GeminiApiKeyEntity(
-                        id = "key_fallback_seeded",
-                        name = "Fallback Gemini Key (Seeded)",
-                        encryptedKey = KeySecurityUtil.encryptKey(fallbackVal),
-                        maskedKey = KeySecurityUtil.maskKey(fallbackVal),
-                        isPrimary = !KeySecurityUtil.isValidKey(primaryVal),
-                        isEnabled = true,
-                        status = "Untested",
-                        lastError = "Awaiting verification on startup",
-                        createdAt = System.currentTimeMillis()
-                    )
-                    dao.insertGeminiApiKey(entity)
-                }
-
-                if (KeySecurityUtil.isValidKey(backupVal)) {
-                    val entity = GeminiApiKeyEntity(
-                        id = "key_backup_seeded",
-                        name = "Backup Gemini Key (Seeded)",
-                        encryptedKey = KeySecurityUtil.encryptKey(backupVal),
-                        maskedKey = KeySecurityUtil.maskKey(backupVal),
-                        isPrimary = !KeySecurityUtil.isValidKey(primaryVal) && !KeySecurityUtil.isValidKey(fallbackVal),
-                        isEnabled = true,
-                        status = "Untested",
-                        lastError = "Awaiting verification on startup",
-                        createdAt = System.currentTimeMillis()
-                    )
-                    dao.insertGeminiApiKey(entity)
-                }
+            if (envKey.isNotBlank()) {
+                val entity = GeminiApiKeyEntity(
+                    id = "key_primary_seeded",
+                    name = "Primary Production Key (Seeded)",
+                    encryptedKey = KeySecurityUtil.encryptKey(envKey),
+                    maskedKey = KeySecurityUtil.maskKey(envKey),
+                    isPrimary = true,
+                    isEnabled = true,
+                    status = "Active",
+                    lastError = "System Initialized",
+                    createdAt = System.currentTimeMillis()
+                )
+                dao.insertGeminiApiKey(entity)
             } else {
-                // First application launch & NO valid BuildConfig keys -> Seed the default placeholder template key
+                // Seed a initial template entry so admin immediately sees structure and can replace key
                 val demoKey = "AIzaSy_ReplaceWithYourActualGeminiKey"
                 val entity = GeminiApiKeyEntity(
                     id = "key_primary_default",
@@ -351,104 +306,6 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
                     createdAt = System.currentTimeMillis()
                 )
                 dao.insertGeminiApiKey(entity)
-            }
-        } else {
-            // Room contains existing keys. Safely synchronize updates only if a BuildConfig key has changed.
-            // This prevents duplicate records or losing user-customized keys on normal app restarts.
-            dao.deleteGeminiApiKey("key_primary_default")
-
-            if (KeySecurityUtil.isValidKey(primaryVal)) {
-                val existingPrimary = existingKeys.firstOrNull { it.id == "key_primary_seeded" }
-                val encryptedVal = KeySecurityUtil.encryptKey(primaryVal)
-                if (existingPrimary == null) {
-                    val entity = GeminiApiKeyEntity(
-                        id = "key_primary_seeded",
-                        name = "Primary Production Key (Seeded)",
-                        encryptedKey = encryptedVal,
-                        maskedKey = KeySecurityUtil.maskKey(primaryVal),
-                        isPrimary = existingKeys.none { it.isPrimary },
-                        isEnabled = true,
-                        status = "Untested",
-                        lastError = "Awaiting verification on startup",
-                        createdAt = System.currentTimeMillis()
-                    )
-                    dao.insertGeminiApiKey(entity)
-                } else if (existingPrimary.encryptedKey != encryptedVal) {
-                    val updated = existingPrimary.copy(
-                        encryptedKey = encryptedVal,
-                        maskedKey = KeySecurityUtil.maskKey(primaryVal),
-                        status = "Untested",
-                        lastError = "Updated from build environment"
-                    )
-                    dao.insertGeminiApiKey(updated)
-                }
-            }
-
-            if (KeySecurityUtil.isValidKey(fallbackVal)) {
-                val existingFallback = existingKeys.firstOrNull { it.id == "key_fallback_seeded" }
-                val encryptedVal = KeySecurityUtil.encryptKey(fallbackVal)
-                if (existingFallback == null) {
-                    val entity = GeminiApiKeyEntity(
-                        id = "key_fallback_seeded",
-                        name = "Fallback Gemini Key (Seeded)",
-                        encryptedKey = encryptedVal,
-                        maskedKey = KeySecurityUtil.maskKey(fallbackVal),
-                        isPrimary = false,
-                        isEnabled = true,
-                        status = "Untested",
-                        lastError = "Awaiting verification on startup",
-                        createdAt = System.currentTimeMillis()
-                    )
-                    dao.insertGeminiApiKey(entity)
-                } else if (existingFallback.encryptedKey != encryptedVal) {
-                    val updated = existingFallback.copy(
-                        encryptedKey = encryptedVal,
-                        maskedKey = KeySecurityUtil.maskKey(fallbackVal),
-                        status = "Untested",
-                        lastError = "Updated from build environment"
-                    )
-                    dao.insertGeminiApiKey(updated)
-                }
-            }
-
-            if (KeySecurityUtil.isValidKey(backupVal)) {
-                val existingBackup = existingKeys.firstOrNull { it.id == "key_backup_seeded" }
-                val encryptedVal = KeySecurityUtil.encryptKey(backupVal)
-                if (existingBackup == null) {
-                    val entity = GeminiApiKeyEntity(
-                        id = "key_backup_seeded",
-                        name = "Backup Gemini Key (Seeded)",
-                        encryptedKey = encryptedVal,
-                        maskedKey = KeySecurityUtil.maskKey(backupVal),
-                        isPrimary = false,
-                        isEnabled = true,
-                        status = "Untested",
-                        lastError = "Awaiting verification on startup",
-                        createdAt = System.currentTimeMillis()
-                    )
-                    dao.insertGeminiApiKey(entity)
-                } else if (existingBackup.encryptedKey != encryptedVal) {
-                    val updated = existingBackup.copy(
-                        encryptedKey = encryptedVal,
-                        maskedKey = KeySecurityUtil.maskKey(backupVal),
-                        status = "Untested",
-                        lastError = "Updated from build environment"
-                    )
-                    dao.insertGeminiApiKey(updated)
-                }
-            }
-        }
-
-        // Trigger background verification of the seeded keys so their status becomes accurate immediately
-        viewModelScope.launch {
-            if (KeySecurityUtil.isValidKey(primaryVal)) {
-                testGeminiApiKey("key_primary_seeded")
-            }
-            if (KeySecurityUtil.isValidKey(fallbackVal)) {
-                testGeminiApiKey("key_fallback_seeded")
-            }
-            if (KeySecurityUtil.isValidKey(backupVal)) {
-                testGeminiApiKey("key_backup_seeded")
             }
         }
     }
@@ -517,7 +374,7 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
 
     fun testGeminiApiKey(id: String, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
         viewModelScope.launch {
-            val targetKey = dao.getGeminiApiKeys().first().firstOrNull { it.id == id } ?: run {
+            val targetKey = geminiApiKeys.value.firstOrNull { it.id == id } ?: run {
                 onResult(false, "Key not found")
                 return@launch
             }

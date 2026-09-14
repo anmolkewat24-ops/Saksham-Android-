@@ -330,7 +330,7 @@ interface SakshamDao {
     @Query("SELECT * FROM gemini_api_keys ORDER BY isPrimary DESC, createdAt DESC")
     fun getGeminiApiKeys(): Flow<List<GeminiApiKeyEntity>>
 
-    @Query("SELECT * FROM gemini_api_keys WHERE isEnabled = 1 ORDER BY isPrimary DESC, (CASE WHEN status = 'Active' OR status = 'Untested' THEN 0 ELSE 1 END) ASC, createdAt DESC")
+    @Query("SELECT * FROM gemini_api_keys WHERE isEnabled = 1 ORDER BY isPrimary DESC, createdAt DESC")
     suspend fun getActiveGeminiApiKeysSync(): List<GeminiApiKeyEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

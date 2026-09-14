@@ -39,23 +39,15 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
 
     private fun getEnvironmentFallbackKey(): String {
         return try {
-            val envKey = System.getenv("GEMINI_API_KEY")
             val envKey1 = System.getenv("GEMINI_API_KEY_1")
-            val envKey2 = System.getenv("GEMINI_API_KEY_2")
-            
+            val envKey = System.getenv("GEMINI_API_KEY")
             val buildKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
             val buildKey1 = try {
                 BuildConfig::class.java.getField("GEMINI_API_KEY_1").get(null) as? String ?: ""
             } catch (e: Throwable) {
                 ""
             }
-            val buildKey2 = try {
-                BuildConfig::class.java.getField("GEMINI_API_KEY_2").get(null) as? String ?: ""
-            } catch (e: Throwable) {
-                ""
-            }
-            
-            listOf(envKey, envKey1, envKey2, buildKey, buildKey1, buildKey2)
+            listOf(envKey1, envKey, buildKey, buildKey1)
                 .firstOrNull { KeySecurityUtil.isValidKey(it) } ?: ""
         } catch (e: Throwable) {
             ""
