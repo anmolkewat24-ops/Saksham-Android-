@@ -134,7 +134,26 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
         chatHistory: List<ChatMessage> = emptyList()
     ): String {
         return withContext(Dispatchers.IO) {
-            // Build candidate key pool (Primary active DB keys first, then secondary, then environment fallback)
+            Log.d("GeminiAdvisorService", "Connecting to Secure Common Backend for chat advice...")
+            
+            // 1. Attempt to resolve response from Common Backend API
+            val backendRepository = SakshamBackendRepository(client)
+            val backendRequest = ChatRequest(
+                message = userPrompt,
+                language = language,
+                profile = profile,
+                chatHistory = chatHistory
+            )
+            val backendResponse = backendRepository.getChatResponse(backendRequest)
+            
+            if (backendResponse.reply != null && backendResponse.reply.isNotBlank()) {
+                Log.d("GeminiAdvisorService", "Successfully retrieved AI reply from common backend.")
+                return@withContext backendResponse.reply
+            } else {
+                Log.w("GeminiAdvisorService", "Backend API returned error/null: ${backendResponse.error}. Falling back to on-device failover...")
+            }
+
+            // 2. Fallback to Local API Key Pool (On-Device direct call)
             val candidateKeys = mutableListOf<CandidateKey>()
 
             val dbKeys = try {
@@ -234,7 +253,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
             // Cycle through active keys in pool for failover
             for (candidate in candidateKeys) {
                 val startTime = System.currentTimeMillis()
-                Log.d("GeminiAdvisorService", "Attempting Gemini call with key '${candidate.name}' (${candidate.maskedKey})")
+                Log.d("GeminiAdvisorService", "Attempting direct Gemini call with key '${candidate.name}' (${candidate.maskedKey})")
                 try {
                     val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${candidate.rawKey}"
                     val requestBody = requestBodyStr.toRequestBody("application/json; charset=utf-8".toMediaType())
@@ -259,7 +278,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
                                 }
                                 val responseText = sb.toString()
                                 if (responseText.isNotBlank()) {
-                                    Log.d("GeminiAdvisorService", "Gemini API success with key '${candidate.name}' (${candidate.maskedKey}) in ${latencyMs}ms")
+                                    Log.d("GeminiAdvisorService", "Direct Gemini API success with key '${candidate.name}' (${candidate.maskedKey}) in ${latencyMs}ms")
                                     // Update DB metrics for successful key
                                     candidate.entityId?.let { id ->
                                         dao?.updateGeminiApiKeyMetrics(
@@ -277,7 +296,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
                             }
                         }
                     } else if (response.code == 429) {
-                        Log.w("GeminiAdvisorService", "Gemini API Quota Exceeded (429) for key '${candidate.name}' (${candidate.maskedKey}). Switching to next key.")
+                        Log.w("GeminiAdvisorService", "Direct Gemini API Quota Exceeded (429) for key '${candidate.name}' (${candidate.maskedKey}). Switching key.")
                         candidate.entityId?.let { id ->
                             dao?.updateGeminiApiKeyMetrics(
                                 keyId = id,
@@ -290,7 +309,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
                             )
                         }
                     } else if (response.code == 403 || response.code == 400) {
-                        Log.w("GeminiAdvisorService", "Gemini API Invalid Key / Forbidden (${response.code}) for key '${candidate.name}' (${candidate.maskedKey}). Switching to next key.")
+                        Log.w("GeminiAdvisorService", "Direct Gemini API Invalid Key / Forbidden (${response.code}) for key '${candidate.name}' (${candidate.maskedKey}). Switching key.")
                         candidate.entityId?.let { id ->
                             dao?.updateGeminiApiKeyMetrics(
                                 keyId = id,
@@ -303,7 +322,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
                             )
                         }
                     } else {
-                        Log.e("GeminiAdvisorService", "Gemini API HTTP Error Code ${response.code} for key '${candidate.name}'. Switching key.")
+                        Log.e("GeminiAdvisorService", "Direct Gemini API HTTP Error Code ${response.code} for key '${candidate.name}'. Switching key.")
                         candidate.entityId?.let { id ->
                             dao?.updateGeminiApiKeyMetrics(
                                 keyId = id,
@@ -318,7 +337,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
                     }
                 } catch (e: Exception) {
                     val latencyMs = System.currentTimeMillis() - startTime
-                    Log.e("GeminiAdvisorService", "Gemini API Exception with key '${candidate.name}' (${candidate.maskedKey}): ${e.message}. Switching key.")
+                    Log.e("GeminiAdvisorService", "Direct Gemini API Exception with key '${candidate.name}' (${candidate.maskedKey}): ${e.message}. Switching key.")
                     candidate.entityId?.let { id ->
                         dao?.updateGeminiApiKeyMetrics(
                             keyId = id,
@@ -333,7 +352,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
                 }
             }
 
-            Log.w("GeminiAdvisorService", "All Gemini API keys in pool failed or exhausted. Using offline fallback.")
+            Log.w("GeminiAdvisorService", "All Direct Gemini API keys in pool failed or exhausted. Using offline fallback.")
             getOfflineVerifiedAdvice(userPrompt, profile, language)
         }
     }

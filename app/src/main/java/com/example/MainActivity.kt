@@ -91,12 +91,17 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
 
         if (!isLoggedIn) {
             LoginScreen(
-                onLoginSuccess = { name, phone, email, age, gender, state, district, category ->
-                    viewModel.loginUser(
-                        name = name,
+                onLoginSuccess = { name, phone, email, age, gender, state, district, category, familyIncome ->
+                    viewModel.registerAndLoginUser(
+                        fullName = name,
                         phone = phone,
+                        email = email,
+                        age = age,
+                        gender = gender,
                         state = state,
-                        district = district
+                        district = district,
+                        socialCategory = category,
+                        familyIncome = familyIncome
                     )
                 },
                 onAdminLogin = { email, pass ->
@@ -178,7 +183,7 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
             }
 
             composable(Screen.Schemes.route) {
-                val matchingSchemes = GovernmentDataRepository.getRecommendedSchemes(businessProfile)
+                val matchingSchemes = GovernmentDataRepository.getRecommendedSchemes(userProfile, businessProfile)
                 val savedIds = savedSchemes.map { it.id }.toSet()
 
                 SchemeRecommendationScreen(

@@ -18,3 +18,8 @@ local.properties
 debug.keystore
 /.build-outputs/
 
+# Node.js Backend Dependencies
+node_modules/
+/server/node_modules/
+
+

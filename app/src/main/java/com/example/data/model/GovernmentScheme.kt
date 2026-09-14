@@ -26,7 +26,9 @@ data class GovernmentScheme(
     val officialPortalName: String = "NSFDC Official Portal (nsfdc.nic.in)",
     val isRecommended: Boolean = false,
     val matchPercentage: Int = 90,
-    val targetBusinessTypes: List<String> = emptyList()
+    val targetBusinessTypes: List<String> = emptyList(),
+    val matchedCriteria: List<String> = emptyList(),
+    val unmetCriteria: List<String> = emptyList()
 )
 
 data class ChannelPartner(

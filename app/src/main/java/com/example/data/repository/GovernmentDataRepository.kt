@@ -450,35 +450,142 @@ object GovernmentDataRepository {
         )
     )
 
-    fun getRecommendedSchemes(profile: BusinessProfile): List<GovernmentScheme> {
+    fun getRecommendedSchemes(
+        userProfile: com.example.data.local.UserProfileEntity?,
+        profile: BusinessProfile
+    ): List<GovernmentScheme> {
         val bTypeLower = profile.businessType.lowercase()
-        return officialSchemes.map { scheme ->
-            var score = 75
+        val userCategory = com.example.util.ProfileFormatter.formatCaste(userProfile?.socialCategory)
+        val userGender = com.example.util.ProfileFormatter.formatGender(userProfile?.gender)
+        val userAge = com.example.util.ProfileFormatter.formatAge(userProfile?.age ?: 25)
+        val userIncomeStr = userProfile?.familyIncome?.ifBlank { profile.annualFamilyIncome } ?: profile.annualFamilyIncome
+        val userIncomeNum = com.example.util.ProfileFormatter.parseIncomeToNumeric(userIncomeStr)
+        val userState = userProfile?.state?.ifBlank { profile.state } ?: profile.state
+        val userDistrict = userProfile?.district?.ifBlank { profile.district } ?: profile.district
+        val isFemale = userGender.equals("Female", ignoreCase = true)
+        val isSC = userCategory.contains("Scheduled Caste", ignoreCase = true) || userCategory.contains("(SC)", ignoreCase = true)
+        val isST = userCategory.contains("Scheduled Tribe", ignoreCase = true) || userCategory.contains("(ST)", ignoreCase = true)
+        val isOBC = userCategory.contains("OBC", ignoreCase = true) || userCategory.contains("Other Backward", ignoreCase = true)
 
-            // Business type matching
+        val evaluatedSchemes = officialSchemes.map { scheme ->
+            var score = 50
+            val matchedList = mutableListOf<String>()
+            val unmetList = mutableListOf<String>()
+
+            // 1. Social Category Evaluation
+            val isNsfdcScheme = scheme.id.startsWith("nsfdc_")
+            if (isNsfdcScheme) {
+                if (isSC) {
+                    score += 25
+                    matchedList.add("Social Category: User category ($userCategory) matches NSFDC mandate")
+                } else {
+                    score -= 30
+                    unmetList.add("Social Category: NSFDC schemes target SC community (User is $userCategory)")
+                }
+            } else if (scheme.id == "stand_up_india") {
+                if (isSC || isST || isFemale) {
+                    score += 25
+                    val matchedRole = if (isFemale) "Women Entrepreneur" else userCategory
+                    matchedList.add("Category/Gender: Stand-Up India targets SC/ST & Women ($matchedRole)")
+                } else {
+                    score -= 25
+                    unmetList.add("Category/Gender: Stand-Up India requires SC/ST or Female applicant (User is $userCategory, $userGender)")
+                }
+            } else if (scheme.id == "pmegp_scheme") {
+                if (isSC || isST || isOBC || isFemale) {
+                    score += 20
+                    matchedList.add("Subsidy Rate: Qualifies for maximum 35% Govt capital subsidy (Special Category)")
+                } else {
+                    score += 10
+                    matchedList.add("Social Category: Open to General category (15-25% subsidy)")
+                }
+            } else if (scheme.id == "pm_mudra_yojana") {
+                score += 15
+                matchedList.add("Social Category: Open to all social categories collateral-free")
+            }
+
+            // 2. Gender Criteria Evaluation
+            if (scheme.id == "nsfdc_mahila_samriddhi") {
+                if (isFemale) {
+                    score += 25
+                    matchedList.add("Gender Criteria: Reserved exclusively for female entrepreneurs")
+                } else {
+                    score -= 40
+                    unmetList.add("Gender Criteria: Mahila Samriddhi is exclusively for female applicants")
+                }
+            } else if (scheme.id == "nsfdc_education_loan" && isFemale) {
+                matchedList.add("Concessional Rate: Special 3.5% p.a. interest rate for female students")
+            }
+
+            // 3. Family Income Evaluation
+            if (isNsfdcScheme) {
+                if (userIncomeNum <= 300000L) {
+                    score += 15
+                    matchedList.add("Annual Family Income: ₹%,d is within NSFDC ₹3.00 Lakh threshold".format(userIncomeNum))
+                } else {
+                    score -= 20
+                    unmetList.add("Annual Family Income: ₹%,d exceeds NSFDC ceiling of ₹3.00 Lakh/year".format(userIncomeNum))
+                }
+            } else {
+                matchedList.add("Income Limit: Commercial growth project (flexible income criteria)")
+            }
+
+            // 4. Loan Amount / Project Cost Evaluation
+            if (profile.loanRequired <= scheme.maxLoanAmount) {
+                score += 15
+                matchedList.add("Loan Requirement: Requested ₹%,d fits within scheme limit (%s)".format(profile.loanRequired, scheme.maxLoanAmountDisplay))
+            } else {
+                score -= 20
+                unmetList.add("Loan Requirement: Requested ₹%,d exceeds scheme maximum cap of %s".format(profile.loanRequired, scheme.maxLoanAmountDisplay))
+            }
+
+            // 5. User Age Criteria Evaluation
+            if (scheme.id == "nsfdc_term_loan") {
+                if (userAge in 18..50) {
+                    matchedList.add("Age Limit: Applicant age ($userAge yrs) is within 18-50 year limit")
+                } else {
+                    unmetList.add("Age Limit: Applicant age ($userAge yrs) is outside 18-50 year limit")
+                }
+            } else if (scheme.id == "nsfdc_micro_credit" || scheme.id == "nsfdc_mahila_samriddhi") {
+                if (userAge in 18..55) {
+                    matchedList.add("Age Limit: Applicant age ($userAge yrs) is within 18-55 year limit")
+                } else {
+                    unmetList.add("Age Limit: Applicant age ($userAge yrs) is outside 18-55 year limit")
+                }
+            }
+
+            // 6. Business Type / Purpose Matching
             if (scheme.targetBusinessTypes.any { bTypeLower.contains(it) }) {
                 score += 15
+                matchedList.add("Business Focus: '${profile.businessType}' matches scheme priority sector")
+            } else if (scheme.id == "nsfdc_education_loan" && !bTypeLower.contains("education")) {
+                score -= 25
+                unmetList.add("Business Focus: Education scheme requires professional degree/diploma purpose")
             }
 
-            // Loan amount suitability
-            if (profile.loanRequired <= scheme.maxLoanAmount) {
-                score += 5
-            }
+            // 7. Location Support
+            matchedList.add("Nodal Center: Authorized State Channelising Agency active in $userDistrict, $userState")
 
-            // Concessional rate factor
-            if (scheme.interestRateMin <= 6.0) {
-                score += 5
-            }
+            val finalScore = score.coerceIn(30, 98)
 
-            // Cap at 98%
-            val finalScore = score.coerceIn(70, 98)
             scheme.copy(
                 matchPercentage = finalScore,
-                isRecommended = (scheme.id == "nsfdc_term_loan" && profile.loanRequired > 200000) ||
-                               (scheme.id == "nsfdc_mahila_samriddhi" && profile.loanRequired <= 150000) ||
-                               (scheme.id == "pmegp_scheme" && profile.businessType.contains("Manufacturing", ignoreCase = true))
+                isRecommended = false,
+                matchedCriteria = matchedList,
+                unmetCriteria = unmetList
             )
         }.sortedByDescending { it.matchPercentage }
+
+        val topScore = evaluatedSchemes.firstOrNull()?.matchPercentage ?: 0
+        return evaluatedSchemes.mapIndexed { index, scheme ->
+            scheme.copy(
+                isRecommended = (index == 0 && scheme.matchPercentage >= 70 && scheme.unmetCriteria.size <= 1)
+            )
+        }
+    }
+
+    fun getRecommendedSchemes(profile: BusinessProfile): List<GovernmentScheme> {
+        return getRecommendedSchemes(null, profile)
     }
 
     fun getSchemeById(id: String): GovernmentScheme? {

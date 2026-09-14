@@ -116,7 +116,8 @@ fun LoginScreen(
         gender: String,
         state: String,
         district: String,
-        category: String
+        category: String,
+        familyIncome: String
     ) -> Unit,
     onAdminLogin: ((email: String, pass: String) -> Boolean)? = null,
     isDarkMode: Boolean = false
@@ -147,11 +148,13 @@ fun LoginScreen(
     var selectedDistrict by remember { mutableStateOf("") }
     var mobileNumber by remember { mutableStateOf("") }
     var emailAddress by remember { mutableStateOf("") }
+    var selectedFamilyIncome by remember { mutableStateOf("Below ₹1.50 Lakh") }
 
     // Dropdown Expansion States
     var stateDropdownExpanded by remember { mutableStateOf(false) }
     var districtDropdownExpanded by remember { mutableStateOf(false) }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    var familyIncomeDropdownExpanded by remember { mutableStateOf(false) }
 
     // Inline Validation Error States (Initially false, shown only upon submission)
     var fullNameError by remember { mutableStateOf<String?>(null) }
@@ -213,17 +216,9 @@ fun LoginScreen(
         stateDistrictMap[selectedState] ?: listOf("Select State First")
     }
 
-    val categoryList = remember {
-        listOf(
-            "Scheduled Caste (SC)",
-            "Scheduled Tribe (ST)",
-            "Other Backward Class (OBC)",
-            "Minority Community",
-            "General / Economically Weaker Section (EWS)"
-        )
-    }
-
-    val genderList = remember { listOf("Male", "Female", "Other", "Prefer not to say") }
+    val categoryList = remember { com.example.util.ProfileFormatter.CASTE_OPTIONS }
+    val genderList = remember { com.example.util.ProfileFormatter.GENDER_OPTIONS }
+    val familyIncomeList = remember { com.example.util.ProfileFormatter.FAMILY_INCOME_OPTIONS }
 
     // Validation Function
     fun validateAndProceed(): Boolean {
@@ -1343,7 +1338,8 @@ fun LoginScreen(
                                             selectedGender,
                                             selectedState,
                                             selectedDistrict,
-                                            selectedCategory
+                                            selectedCategory,
+                                            selectedFamilyIncome
                                         )
                                     } else {
                                         otpError = "Please enter complete 6-digit OTP"
@@ -1412,7 +1408,8 @@ fun LoginScreen(
                                         selectedGender,
                                         selectedState,
                                         selectedDistrict,
-                                        selectedCategory
+                                        selectedCategory,
+                                        selectedFamilyIncome
                                     )
                                 } else {
                                     otpError = "Please enter complete 6-digit OTP (e.g. 123456)"
