@@ -21,6 +21,63 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // Robust environment / properties reader with safe default fallbacks
+    val envMap = mutableMapOf<String, String>()
+    
+    // 1. Try reading from root .env file
+    val envFile = file("${rootDir}/.env")
+    if (envFile.exists()) {
+        envFile.forEachLine { line ->
+            val trimmed = line.trim()
+            if (trimmed.isNotEmpty() && !trimmed.startsWith("#") && trimmed.contains("=")) {
+                val parts = trimmed.split("=", limit = 2)
+                if (parts.size == 2) {
+                    val key = parts[0].trim()
+                    val value = parts[1].trim().removeSurrounding("\"").removeSurrounding("'")
+                    if (value.isNotEmpty()) {
+                        envMap[key] = value
+                    }
+                }
+            }
+        }
+    }
+    
+    // 2. Fallback to reading from .env.example file
+    val exampleFile = file("${rootDir}/.env.example")
+    if (exampleFile.exists()) {
+        exampleFile.forEachLine { line ->
+            val trimmed = line.trim()
+            if (trimmed.isNotEmpty() && !trimmed.startsWith("#") && trimmed.contains("=")) {
+                val parts = trimmed.split("=", limit = 2)
+                if (parts.size == 2) {
+                    val key = parts[0].trim()
+                    val value = parts[1].trim().removeSurrounding("\"").removeSurrounding("'")
+                    if (value.isNotEmpty() && !envMap.containsKey(key)) {
+                        envMap[key] = value
+                    }
+                }
+            }
+        }
+    }
+    
+    // 3. Fallback / Override with System Environment Variables
+    listOf("GEMINI_API_KEY", "GEMINI_API_KEY_1", "GEMINI_API_KEY_2", "API_BASE_URL").forEach { key ->
+        val sysVal = System.getenv(key)
+        if (!sysVal.isNullOrEmpty()) {
+            envMap[key] = sysVal
+        }
+    }
+
+    val geminiApiKeyVal = envMap["GEMINI_API_KEY"] ?: ""
+    val geminiApiKey1Val = envMap["GEMINI_API_KEY_1"] ?: ""
+    val geminiApiKey2Val = envMap["GEMINI_API_KEY_2"] ?: ""
+    val apiBaseUrlVal = envMap["API_BASE_URL"] ?: "https://ais-dev-cn3bcz2l4s6epgfcmtvrwi-564829943939.asia-east1.run.app"
+
+    buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKeyVal}\"")
+    buildConfigField("String", "GEMINI_API_KEY_1", "\"${geminiApiKey1Val}\"")
+    buildConfigField("String", "GEMINI_API_KEY_2", "\"${geminiApiKey2Val}\"")
+    buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrlVal}\"")
   }
 
   signingConfigs {
@@ -69,6 +126,10 @@ secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
+  ignoreList.add("GEMINI_API_KEY")
+  ignoreList.add("GEMINI_API_KEY_1")
+  ignoreList.add("GEMINI_API_KEY_2")
+  ignoreList.add("API_BASE_URL")
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
