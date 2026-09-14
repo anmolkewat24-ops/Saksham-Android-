@@ -266,46 +266,98 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
             dao.updateAdminSettings(AdminSettingsEntity())
         }
 
-        // Seed Gemini API Keys if empty
-        val existingKeys = dao.getGeminiApiKeys().first()
-        if (existingKeys.isEmpty()) {
-            val envKey = try {
-                val k1 = System.getenv("GEMINI_API_KEY_1")
-                val k2 = System.getenv("GEMINI_API_KEY")
-                val k3 = try { com.example.BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
-                listOf(k1, k2, k3).firstOrNull { KeySecurityUtil.isValidKey(it) } ?: ""
-            } catch (e: Throwable) {
-                ""
-            }
+        // Unconditionally synchronize and test actual working keys from environment configuration (BuildConfig) on startup
+        synchronizeAndTestEnvironmentKeys()
+    }
 
-            if (envKey.isNotBlank()) {
+    private suspend fun synchronizeAndTestEnvironmentKeys() {
+        val existingKeys = dao.getGeminiApiKeys().first()
+
+        val primaryVal = try { com.example.BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
+        val fallbackVal = try {
+            com.example.BuildConfig::class.java.getField("GEMINI_API_KEY_1").get(null) as? String ?: ""
+        } catch (e: Throwable) {
+            ""
+        }
+        val backupVal = try {
+            com.example.BuildConfig::class.java.getField("GEMINI_API_KEY_2").get(null) as? String ?: ""
+        } catch (e: Throwable) {
+            ""
+        }
+
+        // Remove the default placeholder template key if present
+        dao.deleteGeminiApiKey("key_primary_default")
+
+        // 1. Insert/Update primary key
+        if (KeySecurityUtil.isValidKey(primaryVal)) {
+            val existingPrimary = existingKeys.firstOrNull { it.id == "key_primary_seeded" }
+            val encryptedVal = KeySecurityUtil.encryptKey(primaryVal)
+            if (existingPrimary == null || existingPrimary.encryptedKey != encryptedVal) {
                 val entity = GeminiApiKeyEntity(
                     id = "key_primary_seeded",
                     name = "Primary Production Key (Seeded)",
-                    encryptedKey = KeySecurityUtil.encryptKey(envKey),
-                    maskedKey = KeySecurityUtil.maskKey(envKey),
-                    isPrimary = true,
-                    isEnabled = true,
-                    status = "Active",
-                    lastError = "System Initialized",
-                    createdAt = System.currentTimeMillis()
-                )
-                dao.insertGeminiApiKey(entity)
-            } else {
-                // Seed a initial template entry so admin immediately sees structure and can replace key
-                val demoKey = "AIzaSy_ReplaceWithYourActualGeminiKey"
-                val entity = GeminiApiKeyEntity(
-                    id = "key_primary_default",
-                    name = "Primary Gemini Key (Action Required)",
-                    encryptedKey = KeySecurityUtil.encryptKey(demoKey),
-                    maskedKey = KeySecurityUtil.maskKey(demoKey),
+                    encryptedKey = encryptedVal,
+                    maskedKey = KeySecurityUtil.maskKey(primaryVal),
                     isPrimary = true,
                     isEnabled = true,
                     status = "Untested",
-                    lastError = "Awaiting API Key input in Admin Panel",
+                    lastError = "Awaiting verification on startup",
                     createdAt = System.currentTimeMillis()
                 )
                 dao.insertGeminiApiKey(entity)
+            }
+        }
+
+        // 2. Insert/Update fallback key 1
+        if (KeySecurityUtil.isValidKey(fallbackVal)) {
+            val existingFallback1 = existingKeys.firstOrNull { it.id == "key_fallback_seeded" }
+            val encryptedVal = KeySecurityUtil.encryptKey(fallbackVal)
+            if (existingFallback1 == null || existingFallback1.encryptedKey != encryptedVal) {
+                val entity = GeminiApiKeyEntity(
+                    id = "key_fallback_seeded",
+                    name = "Fallback Gemini Key (Seeded)",
+                    encryptedKey = encryptedVal,
+                    maskedKey = KeySecurityUtil.maskKey(fallbackVal),
+                    isPrimary = false,
+                    isEnabled = true,
+                    status = "Untested",
+                    lastError = "Awaiting verification on startup",
+                    createdAt = System.currentTimeMillis()
+                )
+                dao.insertGeminiApiKey(entity)
+            }
+        }
+
+        // 3. Insert/Update fallback key 2
+        if (KeySecurityUtil.isValidKey(backupVal)) {
+            val existingFallback2 = existingKeys.firstOrNull { it.id == "key_backup_seeded" }
+            val encryptedVal = KeySecurityUtil.encryptKey(backupVal)
+            if (existingFallback2 == null || existingFallback2.encryptedKey != encryptedVal) {
+                val entity = GeminiApiKeyEntity(
+                    id = "key_backup_seeded",
+                    name = "Backup Gemini Key (Seeded)",
+                    encryptedKey = encryptedVal,
+                    maskedKey = KeySecurityUtil.maskKey(backupVal),
+                    isPrimary = false,
+                    isEnabled = true,
+                    status = "Untested",
+                    lastError = "Awaiting verification on startup",
+                    createdAt = System.currentTimeMillis()
+                )
+                dao.insertGeminiApiKey(entity)
+            }
+        }
+
+        // Automatically trigger validation test in the background
+        viewModelScope.launch {
+            if (KeySecurityUtil.isValidKey(primaryVal)) {
+                testGeminiApiKey("key_primary_seeded")
+            }
+            if (KeySecurityUtil.isValidKey(fallbackVal)) {
+                testGeminiApiKey("key_fallback_seeded")
+            }
+            if (KeySecurityUtil.isValidKey(backupVal)) {
+                testGeminiApiKey("key_backup_seeded")
             }
         }
     }
@@ -374,7 +426,7 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
 
     fun testGeminiApiKey(id: String, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
         viewModelScope.launch {
-            val targetKey = geminiApiKeys.value.firstOrNull { it.id == id } ?: run {
+            val targetKey = dao.getGeminiApiKeys().first().firstOrNull { it.id == id } ?: run {
                 onResult(false, "Key not found")
                 return@launch
             }
