@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.api.GeminiAdvisorService
 import com.example.data.local.AdminSettingsEntity
 import com.example.data.local.AiQueryLogEntity
+import com.example.data.local.GeminiApiKeyEntity
 import com.example.data.local.ManagedPartnerEntity
 import com.example.data.local.ManagedSchemeEntity
 import com.example.data.local.SakshamDatabase
@@ -23,6 +24,7 @@ import com.example.data.model.ChannelPartner
 import com.example.data.model.ChatMessage
 import com.example.data.model.GovernmentScheme
 import com.example.data.repository.GovernmentDataRepository
+import com.example.util.KeySecurityUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +38,7 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
 
     private val db = SakshamDatabase.getDatabase(application)
     private val dao = db.sakshamDao()
-    private val aiService = GeminiAdvisorService()
+    private val aiService = GeminiAdvisorService(dao)
 
     // Authentication session state (User)
     private val _isLoggedIn = MutableStateFlow(false)
@@ -142,6 +144,9 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
 
     val adminSettings: StateFlow<AdminSettingsEntity?> = dao.getAdminSettings()
         .stateIn(viewModelScope, SharingStarted.Eagerly, AdminSettingsEntity())
+
+    val geminiApiKeys: StateFlow<List<GeminiApiKeyEntity>> = dao.getGeminiApiKeys()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         viewModelScope.launch {
@@ -260,9 +265,139 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
         if (settings == null) {
             dao.updateAdminSettings(AdminSettingsEntity())
         }
+
+        // Seed Gemini API Keys if empty
+        val existingKeys = dao.getGeminiApiKeys().first()
+        if (existingKeys.isEmpty()) {
+            val envKey = try {
+                val k1 = System.getenv("GEMINI_API_KEY_1")
+                val k2 = System.getenv("GEMINI_API_KEY")
+                val k3 = try { com.example.BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
+                listOf(k1, k2, k3).firstOrNull { KeySecurityUtil.isValidKey(it) } ?: ""
+            } catch (e: Throwable) {
+                ""
+            }
+
+            if (envKey.isNotBlank()) {
+                val entity = GeminiApiKeyEntity(
+                    id = "key_primary_seeded",
+                    name = "Primary Production Key (Seeded)",
+                    encryptedKey = KeySecurityUtil.encryptKey(envKey),
+                    maskedKey = KeySecurityUtil.maskKey(envKey),
+                    isPrimary = true,
+                    isEnabled = true,
+                    status = "Active",
+                    lastError = "System Initialized",
+                    createdAt = System.currentTimeMillis()
+                )
+                dao.insertGeminiApiKey(entity)
+            } else {
+                // Seed a initial template entry so admin immediately sees structure and can replace key
+                val demoKey = "AIzaSy_ReplaceWithYourActualGeminiKey"
+                val entity = GeminiApiKeyEntity(
+                    id = "key_primary_default",
+                    name = "Primary Gemini Key (Action Required)",
+                    encryptedKey = KeySecurityUtil.encryptKey(demoKey),
+                    maskedKey = KeySecurityUtil.maskKey(demoKey),
+                    isPrimary = true,
+                    isEnabled = true,
+                    status = "Untested",
+                    lastError = "Awaiting API Key input in Admin Panel",
+                    createdAt = System.currentTimeMillis()
+                )
+                dao.insertGeminiApiKey(entity)
+            }
+        }
     }
 
     // === ADMIN ACTIONS ===
+    fun addGeminiApiKey(name: String, rawKey: String, setAsPrimary: Boolean = false) {
+        val trimmedKey = rawKey.trim()
+        val trimmedName = name.trim().ifBlank { "Gemini API Key" }
+        if (trimmedKey.isBlank()) return
+
+        viewModelScope.launch {
+            val id = "key_" + System.currentTimeMillis().toString().takeLast(8)
+            val isFirstKey = geminiApiKeys.value.isEmpty()
+            val entity = GeminiApiKeyEntity(
+                id = id,
+                name = trimmedName,
+                encryptedKey = KeySecurityUtil.encryptKey(trimmedKey),
+                maskedKey = KeySecurityUtil.maskKey(trimmedKey),
+                isPrimary = setAsPrimary || isFirstKey,
+                isEnabled = true,
+                status = "Untested",
+                lastError = "Key added. Click 'Test' to verify.",
+                createdAt = System.currentTimeMillis()
+            )
+            dao.insertGeminiApiKey(entity)
+            if (setAsPrimary) {
+                dao.setPrimaryGeminiApiKey(id)
+            }
+        }
+    }
+
+    fun updateGeminiApiKey(id: String, name: String, rawKey: String) {
+        val trimmedName = name.trim().ifBlank { "Gemini API Key" }
+        viewModelScope.launch {
+            val current = geminiApiKeys.value.firstOrNull { it.id == id } ?: return@launch
+            val updatedEncrypted = if (rawKey.isNotBlank()) KeySecurityUtil.encryptKey(rawKey.trim()) else current.encryptedKey
+            val updatedMasked = if (rawKey.isNotBlank()) KeySecurityUtil.maskKey(rawKey.trim()) else current.maskedKey
+            val updatedEntity = current.copy(
+                name = trimmedName,
+                encryptedKey = updatedEncrypted,
+                maskedKey = updatedMasked,
+                status = if (rawKey.isNotBlank()) "Untested" else current.status,
+                lastError = if (rawKey.isNotBlank()) "Key updated. Click 'Test' to verify." else current.lastError
+            )
+            dao.insertGeminiApiKey(updatedEntity)
+        }
+    }
+
+    fun toggleGeminiApiKeyEnabled(id: String, isEnabled: Boolean) {
+        viewModelScope.launch {
+            dao.toggleGeminiApiKeyEnabled(id, isEnabled)
+        }
+    }
+
+    fun setPrimaryGeminiApiKey(id: String) {
+        viewModelScope.launch {
+            dao.setPrimaryGeminiApiKey(id)
+        }
+    }
+
+    fun deleteGeminiApiKey(id: String) {
+        viewModelScope.launch {
+            dao.deleteGeminiApiKey(id)
+        }
+    }
+
+    fun testGeminiApiKey(id: String, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
+        viewModelScope.launch {
+            val targetKey = geminiApiKeys.value.firstOrNull { it.id == id } ?: run {
+                onResult(false, "Key not found")
+                return@launch
+            }
+
+            val rawKey = KeySecurityUtil.decryptKey(targetKey.encryptedKey)
+            val startTime = System.currentTimeMillis()
+            val (isSuccess, message) = aiService.testSingleKey(rawKey)
+            val latency = System.currentTimeMillis() - startTime
+
+            val newStatus = if (isSuccess) "Active" else if (message.contains("429")) "Quota Exceeded" else "Failed"
+
+            dao.updateGeminiApiKeyMetrics(
+                keyId = id,
+                status = newStatus,
+                lastError = message,
+                latencyMs = latency,
+                lastUsedTimestamp = System.currentTimeMillis(),
+                requestIncrement = 1,
+                errorIncrement = if (isSuccess) 0 else 1
+            )
+            onResult(isSuccess, message)
+        }
+    }
     fun adminLogin(emailInput: String, passwordInput: String): Boolean {
         val cleanEmail = emailInput.trim().lowercase()
         val cleanPass = passwordInput.trim()

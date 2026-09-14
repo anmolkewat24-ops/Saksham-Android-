@@ -2,8 +2,11 @@ package com.example.data.api
 
 import android.util.Log
 import com.example.BuildConfig
+import com.example.data.local.GeminiApiKeyEntity
+import com.example.data.local.SakshamDao
 import com.example.data.model.BusinessProfile
 import com.example.data.model.ChatMessage
+import com.example.util.KeySecurityUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -14,15 +17,28 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
-class GeminiAdvisorService {
+class GeminiAdvisorService(private val dao: SakshamDao? = null) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    private val apiKey: String
-        get() = try {
+    private val testClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .build()
+
+    private data class CandidateKey(
+        val entityId: String?,
+        val name: String,
+        val rawKey: String,
+        val maskedKey: String
+    )
+
+    private fun getEnvironmentFallbackKey(): String {
+        return try {
             val envKey1 = System.getenv("GEMINI_API_KEY_1")
             val envKey = System.getenv("GEMINI_API_KEY")
             val buildKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
@@ -32,15 +48,55 @@ class GeminiAdvisorService {
                 ""
             }
             listOf(envKey1, envKey, buildKey, buildKey1)
-                .firstOrNull { isValidKey(it) } ?: ""
+                .firstOrNull { KeySecurityUtil.isValidKey(it) } ?: ""
         } catch (e: Throwable) {
             ""
         }
+    }
 
-    private fun isValidKey(k: String?): Boolean {
-        if (k.isNullOrBlank()) return false
-        if (k == "MY_GEMINI_API_KEY" || k == "MY_GEMINI_API_KEY_1") return false
-        return true
+    /**
+     * Tests a single API key by making a lightweight ping call to the Gemini REST API.
+     */
+    suspend fun testSingleKey(rawKey: String): Pair<Boolean, String> = withContext(Dispatchers.IO) {
+        val trimmedKey = rawKey.trim()
+        if (!KeySecurityUtil.isValidKey(trimmedKey)) {
+            return@withContext Pair(false, "Invalid key format or empty")
+        }
+
+        val startTime = System.currentTimeMillis()
+        try {
+            val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$trimmedKey"
+            val jsonBody = JSONObject().apply {
+                put("contents", JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("role", "user")
+                        put("parts", JSONArray().apply {
+                            put(JSONObject().put("text", "Respond with 'OK' only."))
+                        })
+                    })
+                })
+            }
+
+            val requestBody = jsonBody.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+            val request = Request.Builder().url(url).post(requestBody).build()
+
+            val response = testClient.newCall(request).execute()
+            val latency = System.currentTimeMillis() - startTime
+            val bodyStr = response.body?.string() ?: ""
+
+            if (response.isSuccessful) {
+                Pair(true, "Healthy (200 OK) • Latency: ${latency}ms")
+            } else if (response.code == 429) {
+                Pair(false, "Quota Exceeded (HTTP 429)")
+            } else if (response.code == 403 || response.code == 400) {
+                Pair(false, "Invalid Key / Access Denied (HTTP ${response.code})")
+            } else {
+                Pair(false, "HTTP ${response.code}: ${bodyStr.take(100)}")
+            }
+        } catch (e: Exception) {
+            val latency = System.currentTimeMillis() - startTime
+            Pair(false, "Connection Error: ${e.localizedMessage ?: "Timeout"}")
+        }
     }
 
     private val systemInstruction = """
@@ -78,109 +134,207 @@ class GeminiAdvisorService {
         chatHistory: List<ChatMessage> = emptyList()
     ): String {
         return withContext(Dispatchers.IO) {
-            if (!isValidKey(apiKey)) {
-                Log.w("GeminiAdvisorService", "No valid Gemini API key found, using offline fallback.")
+            // Build candidate key pool (Primary active DB keys first, then secondary, then environment fallback)
+            val candidateKeys = mutableListOf<CandidateKey>()
+
+            val dbKeys = try {
+                dao?.getActiveGeminiApiKeysSync() ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            dbKeys.forEach { dbKey ->
+                val decrypted = KeySecurityUtil.decryptKey(dbKey.encryptedKey)
+                if (KeySecurityUtil.isValidKey(decrypted)) {
+                    candidateKeys.add(
+                        CandidateKey(
+                            entityId = dbKey.id,
+                            name = dbKey.name,
+                            rawKey = decrypted,
+                            maskedKey = dbKey.maskedKey
+                        )
+                    )
+                }
+            }
+
+            // Fallback environment key
+            val envFallback = getEnvironmentFallbackKey()
+            if (envFallback.isNotBlank() && candidateKeys.none { it.rawKey == envFallback }) {
+                candidateKeys.add(
+                    CandidateKey(
+                        entityId = null,
+                        name = "System Fallback Key",
+                        rawKey = envFallback,
+                        maskedKey = KeySecurityUtil.maskKey(envFallback)
+                    )
+                )
+            }
+
+            if (candidateKeys.isEmpty()) {
+                Log.w("GeminiAdvisorService", "No valid Gemini API key available in key pool. Using offline fallback.")
                 return@withContext getOfflineVerifiedAdvice(userPrompt, profile, language)
             }
 
-            try {
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$apiKey"
+            // Construct JSON request payload
+            val jsonBody = JSONObject()
+            val contentsArray = JSONArray()
 
-                val jsonBody = JSONObject()
-                val contentsArray = JSONArray()
+            val contextInfo = if (profile != null) {
+                """
+                [SYSTEM NOTE: User Profile Data (Use this for context)]
+                • Business Focus: ${profile.businessType} (${if (profile.isExistingBusiness) "Existing" else "New Greenfield Startup"})
+                • Location: ${profile.locationType} area (${profile.district}, ${profile.state})
+                • Estimated Project Cost: ₹${profile.totalInvestment}
+                • Promoter Equity: ₹${profile.ownCapital} | Loan Required: ₹${profile.loanRequired}
+                • Annual Family Income: ${profile.annualFamilyIncome} | Experience: ${profile.businessExperience}
+                • Cattle Scale (if dairy): ${profile.dairyAnimalCount} cows/buffaloes, ${profile.dairyLandAvailable}
+                • Preferred Language: $language
+                """.trimIndent() + "\n\n"
+            } else {
+                "[SYSTEM NOTE: Preferred Language: $language]\n\n"
+            }
 
-                // Inject Context into the FIRST user message or append if history is empty
-                val contextInfo = if (profile != null) {
-                    """
-                    [SYSTEM NOTE: User Profile Data (Use this for context)]
-                    • Business Focus: ${profile.businessType} (${if (profile.isExistingBusiness) "Existing" else "New Greenfield Startup"})
-                    • Location: ${profile.locationType} area (${profile.district}, ${profile.state})
-                    • Estimated Project Cost: ₹${profile.totalInvestment}
-                    • Promoter Equity: ₹${profile.ownCapital} | Loan Required: ₹${profile.loanRequired}
-                    • Annual Family Income: ${profile.annualFamilyIncome} | Experience: ${profile.businessExperience}
-                    • Cattle Scale (if dairy): ${profile.dairyAnimalCount} cows/buffaloes, ${profile.dairyLandAvailable}
-                    • Preferred Language: $language
-                    """.trimIndent() + "\n\n"
-                } else {
-                    "[SYSTEM NOTE: Preferred Language: $language]\n\n"
-                }
-
-                if (chatHistory.isEmpty()) {
-                    // First message
-                    contentsArray.put(JSONObject().apply {
-                        put("role", "user")
-                        put("parts", JSONArray().apply {
-                            put(JSONObject().put("text", contextInfo + userPrompt))
-                        })
-                    })
-                } else {
-                    // Reconstruct history
-                    chatHistory.forEachIndexed { index, msg ->
-                        val text = if (index == 0 && msg.isUser) contextInfo + msg.text else msg.text
-                        contentsArray.put(JSONObject().apply {
-                            put("role", if (msg.isUser) "user" else "model")
-                            put("parts", JSONArray().apply {
-                                put(JSONObject().put("text", text))
-                            })
-                        })
-                    }
-                    // Add current prompt
-                    contentsArray.put(JSONObject().apply {
-                        put("role", "user")
-                        put("parts", JSONArray().apply {
-                            put(JSONObject().put("text", userPrompt))
-                        })
-                    })
-                }
-
-                jsonBody.put("contents", contentsArray)
-
-                jsonBody.put("systemInstruction", JSONObject().apply {
+            if (chatHistory.isEmpty()) {
+                contentsArray.put(JSONObject().apply {
+                    put("role", "user")
                     put("parts", JSONArray().apply {
-                        put(JSONObject().put("text", systemInstruction))
+                        put(JSONObject().put("text", contextInfo + userPrompt))
                     })
                 })
-
-                jsonBody.put("generationConfig", JSONObject().apply {
-                    put("temperature", 0.6)
+            } else {
+                chatHistory.forEachIndexed { index, msg ->
+                    val text = if (index == 0 && msg.isUser) contextInfo + msg.text else msg.text
+                    contentsArray.put(JSONObject().apply {
+                        put("role", if (msg.isUser) "user" else "model")
+                        put("parts", JSONArray().apply {
+                            put(JSONObject().put("text", text))
+                        })
+                    })
+                }
+                contentsArray.put(JSONObject().apply {
+                    put("role", "user")
+                    put("parts", JSONArray().apply {
+                        put(JSONObject().put("text", userPrompt))
+                    })
                 })
+            }
 
-                val requestBody = jsonBody.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-                val request = Request.Builder().url(url).post(requestBody).build()
+            jsonBody.put("contents", contentsArray)
+            jsonBody.put("systemInstruction", JSONObject().apply {
+                put("parts", JSONArray().apply {
+                    put(JSONObject().put("text", systemInstruction))
+                })
+            })
+            jsonBody.put("generationConfig", JSONObject().apply {
+                put("temperature", 0.6)
+            })
 
-                val response = client.newCall(request).execute()
-                val responseBodyStr = response.body?.string() ?: ""
+            val requestBodyStr = jsonBody.toString()
 
-                if (response.isSuccessful) {
-                    val respJson = JSONObject(responseBodyStr)
-                    val candidates = respJson.optJSONArray("candidates")
-                    if (candidates != null && candidates.length() > 0) {
-                        val firstCandidate = candidates.getJSONObject(0)
-                        val content = firstCandidate.optJSONObject("content")
-                        val parts = content?.optJSONArray("parts")
-                        if (parts != null && parts.length() > 0) {
-                            val sb = StringBuilder()
-                            for (i in 0 until parts.length()) {
-                                val txt = parts.getJSONObject(i).optString("text", "")
-                                if (txt.isNotBlank()) sb.append(txt)
-                            }
-                            val responseText = sb.toString()
-                            if (responseText.isNotBlank()) {
-                                Log.d("GeminiAdvisorService", "Gemini API success response received")
-                                return@withContext responseText
+            // Cycle through active keys in pool for failover
+            for (candidate in candidateKeys) {
+                val startTime = System.currentTimeMillis()
+                Log.d("GeminiAdvisorService", "Attempting Gemini call with key '${candidate.name}' (${candidate.maskedKey})")
+                try {
+                    val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${candidate.rawKey}"
+                    val requestBody = requestBodyStr.toRequestBody("application/json; charset=utf-8".toMediaType())
+                    val request = Request.Builder().url(url).post(requestBody).build()
+
+                    val response = client.newCall(request).execute()
+                    val latencyMs = System.currentTimeMillis() - startTime
+                    val responseBodyStr = response.body?.string() ?: ""
+
+                    if (response.isSuccessful) {
+                        val respJson = JSONObject(responseBodyStr)
+                        val candidates = respJson.optJSONArray("candidates")
+                        if (candidates != null && candidates.length() > 0) {
+                            val firstCandidate = candidates.getJSONObject(0)
+                            val content = firstCandidate.optJSONObject("content")
+                            val parts = content?.optJSONArray("parts")
+                            if (parts != null && parts.length() > 0) {
+                                val sb = StringBuilder()
+                                for (i in 0 until parts.length()) {
+                                    val txt = parts.getJSONObject(i).optString("text", "")
+                                    if (txt.isNotBlank()) sb.append(txt)
+                                }
+                                val responseText = sb.toString()
+                                if (responseText.isNotBlank()) {
+                                    Log.d("GeminiAdvisorService", "Gemini API success with key '${candidate.name}' (${candidate.maskedKey}) in ${latencyMs}ms")
+                                    // Update DB metrics for successful key
+                                    candidate.entityId?.let { id ->
+                                        dao?.updateGeminiApiKeyMetrics(
+                                            keyId = id,
+                                            status = "Active",
+                                            lastError = "Healthy (200 OK)",
+                                            latencyMs = latencyMs,
+                                            lastUsedTimestamp = System.currentTimeMillis(),
+                                            requestIncrement = 1,
+                                            errorIncrement = 0
+                                        )
+                                    }
+                                    return@withContext responseText
+                                }
                             }
                         }
+                    } else if (response.code == 429) {
+                        Log.w("GeminiAdvisorService", "Gemini API Quota Exceeded (429) for key '${candidate.name}' (${candidate.maskedKey}). Switching to next key.")
+                        candidate.entityId?.let { id ->
+                            dao?.updateGeminiApiKeyMetrics(
+                                keyId = id,
+                                status = "Quota Exceeded",
+                                lastError = "Quota Exceeded (HTTP 429)",
+                                latencyMs = latencyMs,
+                                lastUsedTimestamp = System.currentTimeMillis(),
+                                requestIncrement = 1,
+                                errorIncrement = 1
+                            )
+                        }
+                    } else if (response.code == 403 || response.code == 400) {
+                        Log.w("GeminiAdvisorService", "Gemini API Invalid Key / Forbidden (${response.code}) for key '${candidate.name}' (${candidate.maskedKey}). Switching to next key.")
+                        candidate.entityId?.let { id ->
+                            dao?.updateGeminiApiKeyMetrics(
+                                keyId = id,
+                                status = "Failed",
+                                lastError = "Forbidden/Invalid (HTTP ${response.code})",
+                                latencyMs = latencyMs,
+                                lastUsedTimestamp = System.currentTimeMillis(),
+                                requestIncrement = 1,
+                                errorIncrement = 1
+                            )
+                        }
+                    } else {
+                        Log.e("GeminiAdvisorService", "Gemini API HTTP Error Code ${response.code} for key '${candidate.name}'. Switching key.")
+                        candidate.entityId?.let { id ->
+                            dao?.updateGeminiApiKeyMetrics(
+                                keyId = id,
+                                status = "Failed",
+                                lastError = "HTTP ${response.code}",
+                                latencyMs = latencyMs,
+                                lastUsedTimestamp = System.currentTimeMillis(),
+                                requestIncrement = 1,
+                                errorIncrement = 1
+                            )
+                        }
                     }
-                } else {
-                    Log.e("GeminiAdvisorService", "Gemini API HTTP Error Code ${response.code}: $responseBodyStr")
+                } catch (e: Exception) {
+                    val latencyMs = System.currentTimeMillis() - startTime
+                    Log.e("GeminiAdvisorService", "Gemini API Exception with key '${candidate.name}' (${candidate.maskedKey}): ${e.message}. Switching key.")
+                    candidate.entityId?.let { id ->
+                        dao?.updateGeminiApiKeyMetrics(
+                            keyId = id,
+                            status = "Failed",
+                            lastError = "Connection Error: ${e.localizedMessage ?: "Timeout"}",
+                            latencyMs = latencyMs,
+                            lastUsedTimestamp = System.currentTimeMillis(),
+                            requestIncrement = 1,
+                            errorIncrement = 1
+                        )
+                    }
                 }
-                
-                // Fallback
-                getOfflineVerifiedAdvice(userPrompt, profile, language)
-            } catch (e: Exception) {
-                Log.e("GeminiAdvisorService", "Gemini API Exception", e)
-                getOfflineVerifiedAdvice(userPrompt, profile, language)
             }
+
+            Log.w("GeminiAdvisorService", "All Gemini API keys in pool failed or exhausted. Using offline fallback.")
+            getOfflineVerifiedAdvice(userPrompt, profile, language)
         }
     }
 

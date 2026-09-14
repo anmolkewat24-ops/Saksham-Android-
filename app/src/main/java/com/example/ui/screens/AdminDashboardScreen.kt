@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -50,6 +51,8 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.KeyOff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
@@ -66,6 +69,8 @@ import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -93,6 +98,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -108,15 +114,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.AdminSettingsEntity
 import com.example.data.local.AiQueryLogEntity
+import com.example.data.local.GeminiApiKeyEntity
 import com.example.data.local.ManagedPartnerEntity
 import com.example.data.local.ManagedSchemeEntity
 import com.example.data.local.SupportTicketEntity
@@ -142,6 +152,7 @@ enum class AdminTab(val title: String, val icon: ImageVector) {
     SCHEMES("Scheme Management", Icons.Default.Description),
     APPLICATIONS("Applications", Icons.Default.Badge),
     AI_MONITORING("AI Assistant", Icons.Default.AutoAwesome),
+    AI_API_MANAGEMENT("AI / API Keys", Icons.Default.Key),
     PARTNERS("Channel Partners", Icons.Default.AccountBalance),
     SUPPORT("Help & Support", Icons.Default.SupportAgent),
     FEEDBACK("Feedback", Icons.Default.Star),
@@ -166,6 +177,7 @@ fun AdminDashboardScreen(
     val applications by viewModel.userApplications.collectAsState()
     val schemes by viewModel.managedSchemes.collectAsState()
     val aiLogs by viewModel.aiQueryLogs.collectAsState()
+    val geminiApiKeys by viewModel.geminiApiKeys.collectAsState()
     val partners by viewModel.managedPartners.collectAsState()
     val tickets by viewModel.supportTickets.collectAsState()
     val feedbacks by viewModel.userFeedbacks.collectAsState()
@@ -318,6 +330,17 @@ fun AdminDashboardScreen(
 
                 AdminTab.AI_MONITORING -> AdminAiMonitoringContent(
                     aiLogs = aiLogs,
+                    isDarkMode = isDarkMode
+                )
+
+                AdminTab.AI_API_MANAGEMENT -> AdminAiApiManagementContent(
+                    apiKeys = geminiApiKeys,
+                    onAddKey = { name, key, isPrimary -> viewModel.addGeminiApiKey(name, key, isPrimary) },
+                    onUpdateKey = { id, name, key -> viewModel.updateGeminiApiKey(id, name, key) },
+                    onToggleEnabled = { id, enabled -> viewModel.toggleGeminiApiKeyEnabled(id, enabled) },
+                    onSetPrimary = { id -> viewModel.setPrimaryGeminiApiKey(id) },
+                    onDeleteKey = { id -> viewModel.deleteGeminiApiKey(id) },
+                    onTestKey = { id, callback -> viewModel.testGeminiApiKey(id, callback) },
                     isDarkMode = isDarkMode
                 )
 
@@ -2134,4 +2157,576 @@ fun AdminSettingsProfileContent(
             Text("Secure Admin Logout")
         }
     }
+}
+
+@Composable
+fun AdminAiApiManagementContent(
+    apiKeys: List<GeminiApiKeyEntity>,
+    onAddKey: (String, String, Boolean) -> Unit,
+    onUpdateKey: (String, String, String) -> Unit,
+    onToggleEnabled: (String, Boolean) -> Unit,
+    onSetPrimary: (String) -> Unit,
+    onDeleteKey: (String) -> Unit,
+    onTestKey: (String, (Boolean, String) -> Unit) -> Unit,
+    isDarkMode: Boolean = false
+) {
+    val context = LocalContext.current
+    val surfaceBg = if (isDarkMode) Color(0xFF121824) else Color(0xFFF4F6FA)
+    val cardBg = if (isDarkMode) Color(0xFF1E2638) else Color.White
+    val textPrimary = if (isDarkMode) Color.White else Color(0xFF1E293B)
+    val textSecondary = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+
+    var showAddDialog by remember { mutableStateOf(false) }
+    var keyToEdit by remember { mutableStateOf<GeminiApiKeyEntity?>(null) }
+    var keyToDelete by remember { mutableStateOf<GeminiApiKeyEntity?>(null) }
+    var testingKeyId by remember { mutableStateOf<String?>(null) }
+
+    val activeKeysCount = apiKeys.count { it.isEnabled }
+    val primaryKey = apiKeys.firstOrNull { it.isPrimary }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Top Header Banner
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = GovBlueDark),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Key,
+                        contentDescription = null,
+                        tint = SaffronAccent,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Text(
+                        text = "AI / Gemini API Key Pool & Failover",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                Text(
+                    text = "Manage API keys used by Saksham Saathi AI Assistant. The engine automatically switches to the next active key if a key fails, times out, or reaches quota limits. Stored keys work natively in standalone APK builds.",
+                    fontSize = 13.sp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    lineHeight = 18.sp
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color.White.copy(alpha = 0.15f),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text("Total Keys", fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+                            Text("${apiKeys.size}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color.White.copy(alpha = 0.15f),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text("Active Pool", fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+                            Text("$activeKeysCount", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = GrowthGreenLight)
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color.White.copy(alpha = 0.15f),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text("Primary Key", fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+                            Text(primaryKey?.name?.take(10) ?: "None", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = SaffronAccent, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Action Bar: Add Key Button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Configured API Keys (${apiKeys.size})",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = textPrimary
+            )
+
+            Button(
+                onClick = { showAddDialog = true },
+                colors = ButtonDefaults.buttonColors(containerColor = GovBluePrimary),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Add Gemini Key", fontSize = 13.sp)
+            }
+        }
+
+        // List of Keys
+        if (apiKeys.isEmpty()) {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(Icons.Default.KeyOff, contentDescription = null, tint = textSecondary, modifier = Modifier.size(48.dp))
+                    Text("No Gemini API Keys Configured", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                    Text("Click 'Add Gemini Key' above to insert your API key for live AI assistant support.", fontSize = 13.sp, color = textSecondary)
+                }
+            }
+        } else {
+            apiKeys.forEach { keyEntity ->
+                val isTestingThisKey = testingKeyId == keyEntity.id
+                ApiKeyCard(
+                    keyEntity = keyEntity,
+                    isTesting = isTestingThisKey,
+                    onToggleEnabled = { enabled -> onToggleEnabled(keyEntity.id, enabled) },
+                    onSetPrimary = { onSetPrimary(keyEntity.id) },
+                    onTestKey = {
+                        testingKeyId = keyEntity.id
+                        onTestKey(keyEntity.id) { isSuccess, message ->
+                            testingKeyId = null
+                            val toastMsg = if (isSuccess) "Test Passed: $message" else "Test Failed: $message"
+                            Toast.makeText(context, toastMsg, Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    onEditKey = { keyToEdit = keyEntity },
+                    onDeleteKey = { keyToDelete = keyEntity },
+                    cardBg = cardBg,
+                    textPrimary = textPrimary,
+                    textSecondary = textSecondary
+                )
+            }
+        }
+
+        // Standalone APK & Security Note
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFF8E1)),
+            border = BorderStroke(1.dp, SaffronAccent.copy(alpha = 0.5f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Icon(Icons.Default.Shield, contentDescription = null, tint = SaffronAccent, modifier = Modifier.size(24.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Security & Standalone APK Compliance", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                    Text(
+                        "• Full API keys are XOR-encrypted before saving to Room database.\n• Full keys are NEVER displayed in UI, logs, or committed to source code.\n• The failover pool ensures uninterrupted AI operation when exported as an APK.",
+                        fontSize = 12.sp,
+                        color = textSecondary,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+        }
+    }
+
+    // Add Key Dialog
+    if (showAddDialog) {
+        AddEditApiKeyDialog(
+            title = "Add New Gemini API Key",
+            initialName = "",
+            initialKey = "",
+            isPrimaryDefault = apiKeys.isEmpty(),
+            onDismiss = { showAddDialog = false },
+            onSave = { name, key, isPrimary ->
+                onAddKey(name, key, isPrimary)
+                showAddDialog = false
+                Toast.makeText(context, "API Key added to secure pool", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    // Edit Key Dialog
+    keyToEdit?.let { target ->
+        AddEditApiKeyDialog(
+            title = "Edit Gemini API Key",
+            initialName = target.name,
+            initialKey = "",
+            isPrimaryDefault = target.isPrimary,
+            isEditMode = true,
+            onDismiss = { keyToEdit = null },
+            onSave = { name, key, isPrimary ->
+                onUpdateKey(target.id, name, key)
+                if (isPrimary && !target.isPrimary) {
+                    onSetPrimary(target.id)
+                }
+                keyToEdit = null
+                Toast.makeText(context, "API Key updated successfully", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    // Delete Key Confirmation Dialog
+    keyToDelete?.let { target ->
+        AlertDialog(
+            onDismissRequest = { keyToDelete = null },
+            title = { Text("Delete API Key") },
+            text = { Text("Are you sure you want to remove '${target.name}' (${target.maskedKey}) from the API key pool?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteKey(target.id)
+                        keyToDelete = null
+                        Toast.makeText(context, "API Key deleted", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { keyToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun ApiKeyCard(
+    keyEntity: GeminiApiKeyEntity,
+    isTesting: Boolean,
+    onToggleEnabled: (Boolean) -> Unit,
+    onSetPrimary: () -> Unit,
+    onTestKey: () -> Unit,
+    onEditKey: () -> Unit,
+    onDeleteKey: () -> Unit,
+    cardBg: Color,
+    textPrimary: Color,
+    textSecondary: Color
+) {
+    val statusColor = when (keyEntity.status) {
+        "Active" -> GrowthGreen
+        "Quota Exceeded" -> SaffronAccent
+        "Failed" -> MaterialTheme.colorScheme.error
+        "Disabled" -> Color.Gray
+        else -> GovBluePrimary
+    }
+
+    val dateFormat = remember { SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()) }
+    val lastUsedStr = if (keyEntity.lastUsedTimestamp > 0) dateFormat.format(Date(keyEntity.lastUsedTimestamp)) else "Never"
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = BorderStroke(
+            width = if (keyEntity.isPrimary) 2.dp else 1.dp,
+            color = if (keyEntity.isPrimary) SaffronAccent else SlateBorder
+        ),
+        elevation = CardDefaults.cardElevation(3.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header Row: Name, Primary Badge, Status Badge & Toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = keyEntity.name,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (keyEntity.isPrimary) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = SaffronAccent
+                            ) {
+                                Text(
+                                    text = "⭐ PRIMARY",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = statusColor.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = keyEntity.status,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = statusColor,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Switch(
+                        checked = keyEntity.isEnabled,
+                        onCheckedChange = onToggleEnabled,
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+            }
+
+            // Masked Key Box
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = textSecondary.copy(alpha = 0.08f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = textSecondary, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = keyEntity.maskedKey,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                    }
+                    Text("Masked (Secured)", fontSize = 10.sp, color = textSecondary)
+                }
+            }
+
+            // Health & Usage Metrics Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Last Used", fontSize = 11.sp, color = textSecondary)
+                    Text(lastUsedStr, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = textPrimary)
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Requests", fontSize = 11.sp, color = textSecondary)
+                    Text("${keyEntity.requestCount} (${keyEntity.errorCount} err)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = textPrimary)
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Latency", fontSize = 11.sp, color = textSecondary)
+                    Text(if (keyEntity.latencyMs > 0) "${keyEntity.latencyMs} ms" else "--", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = textPrimary)
+                }
+            }
+
+            // Last Health / Error Message Box
+            if (keyEntity.lastError.isNotBlank()) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = statusColor.copy(alpha = 0.08f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Status Log: ${keyEntity.lastError}",
+                        fontSize = 11.sp,
+                        color = statusColor,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            HorizontalDivider(color = SlateBorder.copy(alpha = 0.5f))
+
+            // Controls Row: Set Primary, Test, Edit, Delete
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!keyEntity.isPrimary) {
+                    TextButton(
+                        onClick = onSetPrimary,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = SaffronAccent, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Set as Primary", fontSize = 12.sp, color = SaffronAccent)
+                    }
+                } else {
+                    Text("Primary Key", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = SaffronAccent)
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    OutlinedButton(
+                        onClick = onTestKey,
+                        enabled = !isTesting,
+                        shape = RoundedCornerShape(6.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier.height(34.dp)
+                    ) {
+                        if (isTesting) {
+                            Text("Testing...", fontSize = 11.sp)
+                        } else {
+                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Test Key", fontSize = 11.sp)
+                        }
+                    }
+
+                    IconButton(onClick = onEditKey, modifier = Modifier.size(34.dp)) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Key", tint = GovBluePrimary, modifier = Modifier.size(18.dp))
+                    }
+
+                    IconButton(onClick = onDeleteKey, modifier = Modifier.size(34.dp)) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Key", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddEditApiKeyDialog(
+    title: String,
+    initialName: String,
+    initialKey: String,
+    isPrimaryDefault: Boolean = false,
+    isEditMode: Boolean = false,
+    onDismiss: () -> Unit,
+    onSave: (name: String, key: String, isPrimary: Boolean) -> Unit
+) {
+    var name by remember { mutableStateOf(initialName) }
+    var keyText by remember { mutableStateOf(initialKey) }
+    var isPrimary by remember { mutableStateOf(isPrimaryDefault) }
+    var isKeyVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Key Name / Label") },
+                    placeholder = { Text("e.g. Primary Gemini Key") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = keyText,
+                    onValueChange = { keyText = it },
+                    label = { Text(if (isEditMode) "Replace API Key (Optional)" else "Gemini API Key") },
+                    placeholder = { Text("Paste AIzaSy... key here") },
+                    singleLine = true,
+                    visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
+                            Icon(
+                                imageVector = if (isKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = "Toggle Visibility"
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { isPrimary = !isPrimary }
+                ) {
+                    Checkbox(checked = isPrimary, onCheckedChange = { isPrimary = it })
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Set as Primary Key for AI Assistant", fontSize = 13.sp)
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        text = "🔒 Security: Keys are encrypted in Room database. Full keys are never exposed in logs or commits.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(name, keyText, isPrimary)
+                },
+                enabled = isEditMode || keyText.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = GovBluePrimary)
+            ) {
+                Text("Save Key")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

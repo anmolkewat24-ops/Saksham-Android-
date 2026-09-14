@@ -190,6 +190,24 @@ data class AdminSettingsEntity(
     val lastBackupDate: String = "2026-09-13"
 )
 
+// Gemini API Key Management Entity
+@Entity(tableName = "gemini_api_keys")
+data class GeminiApiKeyEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val encryptedKey: String,
+    val maskedKey: String,
+    val isPrimary: Boolean = false,
+    val isEnabled: Boolean = true,
+    val status: String = "Active", // Active, Failed, Quota Exceeded, Disabled, Untested
+    val lastUsedTimestamp: Long = 0L,
+    val lastError: String = "",
+    val requestCount: Int = 0,
+    val errorCount: Int = 0,
+    val latencyMs: Long = 0L,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 @Dao
 interface SakshamDao {
     // Schemes (User)
@@ -307,6 +325,36 @@ interface SakshamDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateAdminSettings(settings: AdminSettingsEntity)
+
+    // Admin Gemini API Key Management
+    @Query("SELECT * FROM gemini_api_keys ORDER BY isPrimary DESC, createdAt DESC")
+    fun getGeminiApiKeys(): Flow<List<GeminiApiKeyEntity>>
+
+    @Query("SELECT * FROM gemini_api_keys WHERE isEnabled = 1 ORDER BY isPrimary DESC, createdAt DESC")
+    suspend fun getActiveGeminiApiKeysSync(): List<GeminiApiKeyEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertGeminiApiKey(key: GeminiApiKeyEntity)
+
+    @Query("DELETE FROM gemini_api_keys WHERE id = :keyId")
+    suspend fun deleteGeminiApiKey(keyId: String)
+
+    @Query("UPDATE gemini_api_keys SET isPrimary = (id = :keyId)")
+    suspend fun setPrimaryGeminiApiKey(keyId: String)
+
+    @Query("UPDATE gemini_api_keys SET isEnabled = :isEnabled WHERE id = :keyId")
+    suspend fun toggleGeminiApiKeyEnabled(keyId: String, isEnabled: Boolean)
+
+    @Query("UPDATE gemini_api_keys SET status = :status, lastError = :lastError, latencyMs = :latencyMs, lastUsedTimestamp = :lastUsedTimestamp, requestCount = requestCount + :requestIncrement, errorCount = errorCount + :errorIncrement WHERE id = :keyId")
+    suspend fun updateGeminiApiKeyMetrics(
+        keyId: String,
+        status: String,
+        lastError: String,
+        latencyMs: Long,
+        lastUsedTimestamp: Long,
+        requestIncrement: Int,
+        errorIncrement: Int
+    )
 }
 
 @Database(
@@ -322,9 +370,10 @@ interface SakshamDao {
         ManagedPartnerEntity::class,
         SupportTicketEntity::class,
         UserFeedbackEntity::class,
-        AdminSettingsEntity::class
+        AdminSettingsEntity::class,
+        GeminiApiKeyEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class SakshamDatabase : RoomDatabase() {
