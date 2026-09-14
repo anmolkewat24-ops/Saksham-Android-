@@ -1,5 +1,6 @@
 package com.example.data.api
 
+import com.example.BuildConfig
 import com.example.data.model.BusinessProfile
 import com.example.data.model.ChatMessage
 import okhttp3.MediaType.Companion.toMediaType
@@ -32,11 +33,25 @@ interface ISakshamBackendService {
 class SakshamBackendRepository(private val client: OkHttpClient) : ISakshamBackendService {
     
     companion object {
-        // Both the dynamic deployment preview URL and local loopback address are configured
-        private const val LIVE_URL = "https://ais-dev-cn3bcz2l4s6epgfcmtvrwi-564829943939.asia-east1.run.app/api/ai/chat"
+        // Retrieve the configured base URL from BuildConfig (provided via .env / Secrets)
+        private val BASE_URL_FROM_CONFIG: String by lazy {
+            try {
+                BuildConfig.API_BASE_URL.trim().removeSuffix("/")
+            } catch (e: Throwable) {
+                "https://ais-dev-cn3bcz2l4s6epgfcmtvrwi-564829943939.asia-east1.run.app"
+            }
+        }
+        
+        // Construct the full chat endpoint URL
+        private val LIVE_URL = if (BASE_URL_FROM_CONFIG.endsWith("/api/ai/chat")) {
+            BASE_URL_FROM_CONFIG
+        } else {
+            "$BASE_URL_FROM_CONFIG/api/ai/chat"
+        }
+        
         private const val LOCAL_URL = "http://10.0.2.2:3000/api/ai/chat"
         
-        // Active backend endpoint URL (Defaults to the live development URL)
+        // Active backend endpoint URL (Defaults to the configured production/live URL)
         var activeUrl: String = LIVE_URL
     }
 

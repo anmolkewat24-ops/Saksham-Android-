@@ -1,9 +1,12 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Keep OkHttp, Retrofit, and JSON classes
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+
+# Keep our data transfer objects and API model classes
+-keep class com.example.data.api.ChatRequest { *; }
+-keep class com.example.data.api.ChatResponse { *; }
+-keep class com.example.data.model.** { *; }
+-keep class org.json.** { *; }
+
 
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface

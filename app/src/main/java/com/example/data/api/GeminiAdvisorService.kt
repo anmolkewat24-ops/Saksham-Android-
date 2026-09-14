@@ -39,15 +39,23 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
 
     private fun getEnvironmentFallbackKey(): String {
         return try {
-            val envKey1 = System.getenv("GEMINI_API_KEY_1")
             val envKey = System.getenv("GEMINI_API_KEY")
+            val envKey1 = System.getenv("GEMINI_API_KEY_1")
+            val envKey2 = System.getenv("GEMINI_API_KEY_2")
+            
             val buildKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Throwable) { "" }
             val buildKey1 = try {
                 BuildConfig::class.java.getField("GEMINI_API_KEY_1").get(null) as? String ?: ""
             } catch (e: Throwable) {
                 ""
             }
-            listOf(envKey1, envKey, buildKey, buildKey1)
+            val buildKey2 = try {
+                BuildConfig::class.java.getField("GEMINI_API_KEY_2").get(null) as? String ?: ""
+            } catch (e: Throwable) {
+                ""
+            }
+            
+            listOf(envKey, envKey1, envKey2, buildKey, buildKey1, buildKey2)
                 .firstOrNull { KeySecurityUtil.isValidKey(it) } ?: ""
         } catch (e: Throwable) {
             ""
@@ -65,7 +73,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
 
         val startTime = System.currentTimeMillis()
         try {
-            val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$trimmedKey"
+            val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=$trimmedKey"
             val jsonBody = JSONObject().apply {
                 put("contents", JSONArray().apply {
                     put(JSONObject().apply {
@@ -255,7 +263,7 @@ class GeminiAdvisorService(private val dao: SakshamDao? = null) {
                 val startTime = System.currentTimeMillis()
                 Log.d("GeminiAdvisorService", "Attempting direct Gemini call with key '${candidate.name}' (${candidate.maskedKey})")
                 try {
-                    val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${candidate.rawKey}"
+                    val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${candidate.rawKey}"
                     val requestBody = requestBodyStr.toRequestBody("application/json; charset=utf-8".toMediaType())
                     val request = Request.Builder().url(url).post(requestBody).build()
 
