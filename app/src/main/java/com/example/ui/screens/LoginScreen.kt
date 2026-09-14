@@ -44,9 +44,12 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Wc
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -115,13 +118,24 @@ fun LoginScreen(
         district: String,
         category: String
     ) -> Unit,
+    onAdminLogin: ((email: String, pass: String) -> Boolean)? = null,
     isDarkMode: Boolean = false
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
 
-    // Current Step
+    // Mode Tab: 0 = Beneficiary Citizen Login, 1 = Admin Portal Login
+    var loginTypeTab by remember { mutableIntStateOf(0) }
+
+    // Admin Credentials State
+    var adminEmailInput by remember { mutableStateOf("") }
+    var adminPasswordInput by remember { mutableStateOf("") }
+    var adminCaptchaInput by remember { mutableStateOf("") }
+    var captchaCode by remember { mutableStateOf("7K9P") }
+    var adminLoginError by remember { mutableStateOf<String?>(null) }
+
+    // Current Step for Citizen Login
     var currentStep by remember { mutableStateOf(LoginAuthStep.PROFILE_FORM) }
 
     // Form Fields (Initialized strictly EMPTY - No fake pre-filled values)
@@ -369,14 +383,277 @@ fun LoginScreen(
                 modifier = Modifier.padding(top = 2.dp)
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Animated Screen Step Switcher
-            AnimatedVisibility(
-                visible = currentStep == LoginAuthStep.PROFILE_FORM,
-                enter = fadeIn(),
-                exit = fadeOut()
+            // Login Mode Switcher (Beneficiary vs Admin Login)
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (isDarkMode) Color(0xFF1E2638) else Color(0xFFE2E8F0),
+                modifier = Modifier.fillMaxWidth()
             ) {
+                Row(
+                    modifier = Modifier.padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Surface(
+                        onClick = { loginTypeTab = 0 },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (loginTypeTab == 0) GovBluePrimary else Color.Transparent,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 10.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = if (loginTypeTab == 0) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Citizen Login",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (loginTypeTab == 0) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Surface(
+                        onClick = { loginTypeTab = 1 },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (loginTypeTab == 1) SaffronAccent else Color.Transparent,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 10.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = if (loginTypeTab == 1) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Admin Portal",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (loginTypeTab == 1) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (loginTypeTab == 1) {
+                // ==========================================
+                // OFFICIAL ADMIN PORTAL LOGIN FORM
+                // ==========================================
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(
+                        1.dp,
+                        if (isDarkMode) MaterialTheme.colorScheme.outlineVariant else SlateBorder
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = SaffronAccent.copy(alpha = 0.15f),
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Security,
+                                        contentDescription = null,
+                                        tint = SaffronAccent,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = "Official Admin Authentication",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "NSFDC Governance & Monitoring Console",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                        // Admin Email / ID
+                        OutlinedTextField(
+                            value = adminEmailInput,
+                            onValueChange = {
+                                adminEmailInput = it
+                                adminLoginError = null
+                            },
+                            label = { Text("Admin Email / Official ID") },
+                            placeholder = { Text("e.g. admin@saksham.gov.in") },
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = SaffronAccent) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+
+                        // Admin Password
+                        OutlinedTextField(
+                            value = adminPasswordInput,
+                            onValueChange = {
+                                adminPasswordInput = it
+                                adminLoginError = null
+                            },
+                            label = { Text("Admin Password") },
+                            placeholder = { Text("Enter official password") },
+                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = SaffronAccent) },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+
+                        // Captcha Box
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = SaffronAccent.copy(alpha = 0.2f),
+                                border = BorderStroke(1.dp, SaffronAccent),
+                                modifier = Modifier
+                                    .weight(0.4f)
+                                    .height(52.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = captchaCode,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 4.sp,
+                                        color = SaffronAccent
+                                    )
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value = adminCaptchaInput,
+                                onValueChange = {
+                                    adminCaptchaInput = it
+                                    adminLoginError = null
+                                },
+                                label = { Text("Enter Captcha") },
+                                singleLine = true,
+                                modifier = Modifier.weight(0.6f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                        }
+
+                        // Demo Quick Auto-Fill Chip
+                        Surface(
+                            onClick = {
+                                adminEmailInput = "admin@saksham.gov.in"
+                                adminPasswordInput = "admin123"
+                                adminCaptchaInput = captchaCode
+                                adminLoginError = null
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            color = GovBluePrimary.copy(alpha = 0.08f),
+                            border = BorderStroke(1.dp, GovBluePrimary.copy(alpha = 0.3f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = GovBluePrimary, modifier = Modifier.size(16.dp))
+                                Column {
+                                    Text("Tap to Auto-fill Admin Demo Credentials", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = GovBluePrimary)
+                                    Text("admin@saksham.gov.in / admin123", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+
+                        if (adminLoginError != null) {
+                            Text(
+                                text = adminLoginError ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                if (adminEmailInput.isBlank() || adminPasswordInput.isBlank()) {
+                                    adminLoginError = "Please enter Admin Email & Password"
+                                    return@Button
+                                }
+                                if (adminCaptchaInput.trim().uppercase() != captchaCode.uppercase()) {
+                                    adminLoginError = "Security Captcha mismatched! Try again."
+                                    return@Button
+                                }
+
+                                val success = onAdminLogin?.invoke(adminEmailInput.trim(), adminPasswordInput.trim()) ?: false
+                                if (!success) {
+                                    adminLoginError = "Invalid Admin Credentials! (Use admin@saksham.gov.in / admin123)"
+                                } else {
+                                    Toast.makeText(context, "Admin Authentication Successful!", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = SaffronAccent),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.Shield, contentDescription = null, tint = Color.White)
+                                Text("Login to Admin Console", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Animated Screen Step Switcher
+                AnimatedVisibility(
+                    visible = currentStep == LoginAuthStep.PROFILE_FORM,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
                 // ==========================================
                 // STEP 1: BENEFICIARY PROFILE CREATION FORM
                 // ==========================================
@@ -1194,4 +1471,5 @@ fun LoginScreen(
             }
         }
     }
+}
 }

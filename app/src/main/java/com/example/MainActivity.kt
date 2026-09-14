@@ -78,8 +78,17 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
 
     // Check if user is logged in (strictly true only when authenticated)
     val isLoggedIn = userProfile?.isLoggedIn == true
+    val isAdminLoggedIn by viewModel.isAdminLoggedIn.collectAsState()
 
     CompositionLocalProvider(LocalLanguage provides selectedLanguage) {
+        if (isAdminLoggedIn) {
+            com.example.ui.screens.AdminDashboardScreen(
+                viewModel = viewModel,
+                isDarkMode = isDarkMode
+            )
+            return@CompositionLocalProvider
+        }
+
         if (!isLoggedIn) {
             LoginScreen(
                 onLoginSuccess = { name, phone, email, age, gender, state, district, category ->
@@ -89,6 +98,9 @@ fun SakshamApp(viewModel: SakshamViewModel = viewModel(), isDarkMode: Boolean = 
                         state = state,
                         district = district
                     )
+                },
+                onAdminLogin = { email, pass ->
+                    viewModel.adminLogin(email, pass)
                 },
                 isDarkMode = isDarkMode
             )
