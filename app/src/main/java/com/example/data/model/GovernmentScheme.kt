@@ -22,6 +22,8 @@ data class GovernmentScheme(
     val requiredDocuments: List<String>,
     val howToApplySteps: List<String>,
     val channelPartnersInfo: String,
+    val officialApplyUrl: String = "https://nsfdc.nic.in",
+    val officialPortalName: String = "NSFDC Official Portal (nsfdc.nic.in)",
     val isRecommended: Boolean = false,
     val matchPercentage: Int = 90,
     val targetBusinessTypes: List<String> = emptyList()

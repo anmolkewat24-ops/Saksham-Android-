@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassBottom
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Launch
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.Schedule
@@ -44,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -80,6 +83,8 @@ fun SchemeDetailScreen(
         }
         return
     }
+
+    val uriHandler = LocalUriHandler.current
 
     val cardBorder = androidx.compose.foundation.BorderStroke(
         1.dp,
@@ -162,6 +167,112 @@ fun SchemeDetailScreen(
                             lineHeight = 16.sp
                         )
                     }
+                }
+            }
+        }
+
+        // Official Application Portal Hero Card
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDarkMode) Color(0xFF132A1C) else GrowthGreenLight
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, GrowthGreen),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Launch,
+                            contentDescription = null,
+                            tint = GrowthGreen,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Verified Official Application Portal",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDarkMode) GrowthGreenLight else Color(0xFF14532D)
+                            )
+                            Text(
+                                text = scheme.officialPortalName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Portal Web Address: ${scheme.officialApplyUrl}",
+                        fontSize = 11.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = { uriHandler.openUri(scheme.officialApplyUrl) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .testTag("apply_now_hero_button"),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = GrowthGreen)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Launch,
+                            contentDescription = "Apply Now",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Apply Now on Official Portal (आधिकारिक पोर्टल पर आवेदन करें) ↗",
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
+        // Platform Disclosure Notice
+        item {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFBEB)
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) MaterialTheme.colorScheme.outlineVariant else Color(0xFFFCD34D)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Platform Info",
+                        tint = SaffronAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Saksham Platform Information: Saksham is an AI-powered scheme discovery and guidance platform. Saksham does NOT issue loans directly. Official applications are received, sanctioned, and processed by official government departments.",
+                        fontSize = 11.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 16.sp
+                    )
                 }
             }
         }
@@ -350,27 +461,53 @@ fun SchemeDetailScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Prominent Button: Find Eligible Partner
+                    // Prominent Apply Now Button
                     Button(
-                        onClick = { onNavigate(Screen.Partners) },
+                        onClick = { uriHandler.openUri(scheme.officialApplyUrl) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
-                            .testTag("find_eligible_partner_button"),
+                            .height(50.dp)
+                            .testTag("apply_now_bottom_button"),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = GrowthGreen)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.LocationOn,
+                            imageVector = Icons.Default.Launch,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Apply Now on Official Portal (आधिकारिक पोर्टल पर जाएं) ↗",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.5.sp,
+                            color = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Prominent Button: Find Eligible Partner
+                    OutlinedButton(
+                        onClick = { onNavigate(Screen.Partners) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("find_eligible_partner_button"),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(text = com.example.ui.i18n.SakshamStrings.get("find_eligible_partner_निकटतम_बैंक_खोजें"),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color.White
+                            fontSize = 13.sp,
+                            color = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary
                         )
                     }
 

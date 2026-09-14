@@ -25,6 +25,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Launch
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,6 +35,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -177,6 +181,42 @@ fun SchemeRecommendationScreen(
                             fontSize = 13.sp
                         )
                     }
+                }
+            }
+        }
+
+        // Platform Disclosure Notice (Saksham as Discovery & Guidance Platform)
+        item {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFBEB)
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) MaterialTheme.colorScheme.outlineVariant else Color(0xFFFCD34D)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Platform Info",
+                        tint = SaffronAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Platform Disclosure: Saksham is a scheme discovery and guidance platform. Saksham does NOT issue or disburse loans directly. All applications are submitted directly on verified official government portals or at authorized channel agencies.",
+                        fontSize = 11.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 16.sp
+                    )
                 }
             }
         }
@@ -447,26 +487,86 @@ fun SchemeCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // View Details Button
-            Button(
-                onClick = onViewDetails,
+            // Official Portal Badge
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("view_details_button_${scheme.id}"),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isHighlighted) GovBluePrimary else if (isDarkMode) Color(0xFF2563EB) else GovBlueDark
-                )
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF1F5F9))
+                    .padding(horizontal = 8.dp, vertical = 5.dp)
             ) {
-                Text(text = com.example.ui.i18n.SakshamStrings.get("view_complete_details_विस्तृत_जानकारी"),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                Icon(
+                    imageVector = Icons.Default.Launch,
+                    contentDescription = null,
+                    tint = GrowthGreen,
+                    modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Text(
+                    text = "Portal: ${scheme.officialPortalName}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Action Buttons Row: Apply Now & View Details
+            val uriHandler = LocalUriHandler.current
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Prominent Apply Now Button
+                Button(
+                    onClick = { uriHandler.openUri(scheme.officialApplyUrl) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .testTag("apply_now_button_${scheme.id}"),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GrowthGreen)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Launch,
+                        contentDescription = "Apply Now",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Apply Now (आधिकारिक पोर्टल पर जाएं) ↗",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                // View Details Button
+                OutlinedButton(
+                    onClick = onViewDetails,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                        .testTag("view_details_button_${scheme.id}"),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        text = com.example.ui.i18n.SakshamStrings.get("view_complete_details_विस्तृत_जानकारी"),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = if (isDarkMode) GovBluePrimaryDark else GovBluePrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }

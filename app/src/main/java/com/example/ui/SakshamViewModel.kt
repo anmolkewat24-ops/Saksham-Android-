@@ -181,6 +181,8 @@ class SakshamViewModel(application: Application) : AndroidViewModel(application)
                         moratoriumMonths = s.moratoriumMonths,
                         eligibilitySummary = s.eligibilitySummary,
                         description = s.suitablePurpose,
+                        officialApplyUrl = s.officialApplyUrl,
+                        officialPortalName = s.officialPortalName,
                         isActive = true,
                         updatedAt = System.currentTimeMillis()
                     )

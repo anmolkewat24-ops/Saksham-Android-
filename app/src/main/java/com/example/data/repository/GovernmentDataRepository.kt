@@ -11,7 +11,7 @@ object GovernmentDataRepository {
             id = "nsfdc_term_loan",
             name = "NSFDC Term Loan Scheme",
             shortName = "Term Loan",
-            department = "National Scheduled Castes Finance and Development Corp. (NSFDC), Ministry of Social Justice & Empowerment",
+            department = "National Scheduled Castes Finance and Development Corp. (NSFDC), Ministry of Social Justice & Empowerment, Govt. of India",
             category = "Business Loan",
             maxLoanAmount = 5000000L,
             maxLoanAmountDisplay = "Up to ₹50.00 Lakh",
@@ -42,12 +42,14 @@ object GovernmentDataRepository {
                 "Two Passport Size Photographs"
             ),
             howToApplySteps = listOf(
-                "Step 1: Fill out the application form at your District State Channelising Agency (SCA) office or through your nearest partner bank.",
-                "Step 2: Submit the project estimate along with your caste and income certificates.",
+                "Step 1: Click 'Apply Now' below to visit the official NSFDC portal (nsfdc.nic.in) or submit at your District State Channelising Agency (SCA) office.",
+                "Step 2: Submit the project estimate along with your verified caste and income certificates.",
                 "Step 3: Joint inspection & techno-economic feasibility review by District Level Task Force.",
                 "Step 4: Loan sanctioned and funds disbursed directly to your bank account / vendor in phases."
             ),
             channelPartnersInfo = "Disbursed through State Channelising Agencies (SCAs), Regional Rural Banks (RRBs), and designated Public Sector Banks.",
+            officialApplyUrl = "https://nsfdc.nic.in",
+            officialPortalName = "NSFDC Official Portal (nsfdc.nic.in)",
             isRecommended = true,
             matchPercentage = 96,
             targetBusinessTypes = listOf("dairy", "manufacturing", "agriculture", "service", "retail", "transport")
@@ -56,7 +58,7 @@ object GovernmentDataRepository {
             id = "nsfdc_mahila_samriddhi",
             name = "Mahila Samriddhi Yojana (MSY)",
             shortName = "Mahila Samriddhi",
-            department = "NSFDC, Ministry of Social Justice & Empowerment",
+            department = "NSFDC, Ministry of Social Justice & Empowerment, Govt. of India",
             category = "Women Entrepreneurship",
             maxLoanAmount = 140000L,
             maxLoanAmountDisplay = "Up to ₹1.40 Lakh",
@@ -85,12 +87,14 @@ object GovernmentDataRepository {
                 "Passport size photographs"
             ),
             howToApplySteps = listOf(
-                "Step 1: Contact District SCA field worker or visit the nearest State Channel Partner branch.",
+                "Step 1: Click 'Apply Now' to visit the official NSFDC application portal (nsfdc.nic.in) or contact your District SCA field office.",
                 "Step 2: Fill simple single-page MSY application format.",
                 "Step 3: Verification by Women Development Officer / SCA field officer.",
                 "Step 4: Direct disbursement into beneficiary bank account with prompt repayment incentives."
             ),
             channelPartnersInfo = "Available via UPSCFDC, DSCFDC, and designated Regional Rural Banks across all districts.",
+            officialApplyUrl = "https://nsfdc.nic.in",
+            officialPortalName = "NSFDC Official Portal (nsfdc.nic.in)",
             isRecommended = false,
             matchPercentage = 92,
             targetBusinessTypes = listOf("dairy", "tailoring", "retail", "food", "handicrafts")
@@ -99,7 +103,7 @@ object GovernmentDataRepository {
             id = "nsfdc_micro_credit",
             name = "Micro Credit Finance (MCF) Scheme",
             shortName = "Micro Credit (MCF)",
-            department = "NSFDC, Ministry of Social Justice & Empowerment",
+            department = "NSFDC, Ministry of Social Justice & Empowerment, Govt. of India",
             category = "Business Loan",
             maxLoanAmount = 140000L,
             maxLoanAmountDisplay = "Up to ₹1.40 Lakh",
@@ -126,11 +130,13 @@ object GovernmentDataRepository {
                 "Simple business activity declaration"
             ),
             howToApplySteps = listOf(
-                "Step 1: Apply through local SCA district branch or affiliated Self-Help Group (SHG) Federation.",
-                "Step 2: Quick verification within 14 days.",
+                "Step 1: Click 'Apply Now' to access official NSFDC guidelines and portal (nsfdc.nic.in) or visit local SCA branch.",
+                "Step 2: Quick verification within 14 days by local channel partner.",
                 "Step 3: Direct benefit transfer to beneficiary account."
             ),
             channelPartnersInfo = "State Channelising Agencies & Accredited Micro-finance NGOs.",
+            officialApplyUrl = "https://nsfdc.nic.in",
+            officialPortalName = "NSFDC Official Portal (nsfdc.nic.in)",
             isRecommended = false,
             matchPercentage = 88,
             targetBusinessTypes = listOf("retail", "food", "service", "handicrafts")
@@ -139,7 +145,7 @@ object GovernmentDataRepository {
             id = "nsfdc_education_loan",
             name = "NSFDC Education Loan Scheme (EL)",
             shortName = "Education Loan",
-            department = "NSFDC, Ministry of Social Justice & Empowerment",
+            department = "NSFDC, Ministry of Social Justice & Empowerment, Govt. of India",
             category = "Education Loan",
             maxLoanAmount = 3000000L,
             maxLoanAmountDisplay = "Up to ₹20L (India) / ₹30L (Abroad)",
@@ -168,11 +174,13 @@ object GovernmentDataRepository {
                 "Co-obligation / Guarantee of Parent"
             ),
             howToApplySteps = listOf(
-                "Step 1: Apply online through SCA portal or in person at SCA District Office.",
-                "Step 2: Submit college admission letter and approved fee structure.",
-                "Step 3: Sanction within 3 weeks and direct disbursement to institution account."
+                "Step 1: Click 'Apply Now' to apply directly via Vidya Lakshmi Official Education Loan Portal (vidyalakshmi.co.in) or NSFDC portal.",
+                "Step 2: Upload college admission letter and approved fee structure.",
+                "Step 3: Direct sanction and disbursement to institution account."
             ),
             channelPartnersInfo = "State Channelising Agencies and Nationalized Bank education desks.",
+            officialApplyUrl = "https://www.vidyalakshmi.co.in",
+            officialPortalName = "Vidya Lakshmi Portal (vidyalakshmi.co.in)",
             isRecommended = false,
             matchPercentage = 85,
             targetBusinessTypes = listOf("education")
@@ -181,7 +189,7 @@ object GovernmentDataRepository {
             id = "pmegp_scheme",
             name = "Prime Minister's Employment Generation Programme (PMEGP)",
             shortName = "PMEGP Loan & Subsidy",
-            department = "Ministry of MSME / KVIC",
+            department = "Khadi and Village Industries Commission (KVIC), Ministry of MSME, Govt. of India",
             category = "Business Loan",
             maxLoanAmount = 5000000L,
             maxLoanAmountDisplay = "Up to ₹50 Lakh (Mfg) / ₹20 Lakh (Service)",
@@ -209,11 +217,13 @@ object GovernmentDataRepository {
                 "EDP Training Certificate (provided after sanction)"
             ),
             howToApplySteps = listOf(
-                "Step 1: Submit application on the official PMEGP e-Portal (kviconline.gov.in).",
+                "Step 1: Click 'Apply Now' to submit online application on the official PMEGP e-Portal (kviconline.gov.in).",
                 "Step 2: District Level Task Force Committee (DLTFC) evaluates application.",
                 "Step 3: Forwarded to selected financing bank for credit appraisal and margin money deposit."
             ),
             channelPartnersInfo = "Implemented through KVIC, State KVIB, DIC, and all Nationalized Public Sector Banks.",
+            officialApplyUrl = "https://www.kviconline.gov.in/pmegpeportal/pmegpweb/index.jsp",
+            officialPortalName = "PMEGP e-Portal (kviconline.gov.in)",
             isRecommended = false,
             matchPercentage = 91,
             targetBusinessTypes = listOf("manufacturing", "dairy", "food", "agriculture", "service")
@@ -222,7 +232,7 @@ object GovernmentDataRepository {
             id = "nsfdc_green_business",
             name = "NSFDC Green Business Scheme",
             shortName = "Green Business",
-            department = "NSFDC, Ministry of Social Justice & Empowerment",
+            department = "NSFDC, Ministry of Social Justice & Empowerment, Govt. of India",
             category = "Green Business",
             maxLoanAmount = 3000000L,
             maxLoanAmountDisplay = "Up to ₹30.00 Lakh",
@@ -247,11 +257,13 @@ object GovernmentDataRepository {
                 "Technical clearance / feasibility proof"
             ),
             howToApplySteps = listOf(
-                "Step 1: Apply at SCA district office selecting Green Technology window.",
+                "Step 1: Click 'Apply Now' to visit official NSFDC Green Business portal (nsfdc.nic.in) or local SCA office.",
                 "Step 2: Technical validation by Renewable Energy Nodal Agency.",
                 "Step 3: Sanction and release of funds."
             ),
             channelPartnersInfo = "State Channelising Agencies and participating RRBs.",
+            officialApplyUrl = "https://nsfdc.nic.in",
+            officialPortalName = "NSFDC Official Portal (nsfdc.nic.in)",
             isRecommended = false,
             matchPercentage = 84,
             targetBusinessTypes = listOf("dairy", "agriculture", "transport", "service")
@@ -260,7 +272,7 @@ object GovernmentDataRepository {
             id = "pm_mudra_yojana",
             name = "Pradhan Mantri MUDRA Yojana (PMMY)",
             shortName = "Mudra Loan",
-            department = "Department of Financial Services, Ministry of Finance",
+            department = "Department of Financial Services, Ministry of Finance, Govt. of India",
             category = "Business Loan",
             maxLoanAmount = 2000000L,
             maxLoanAmountDisplay = "Up to ₹20.00 Lakh (Shishu/Kishore/Tarun)",
@@ -289,11 +301,13 @@ object GovernmentDataRepository {
                 "Last 6 months bank statement"
             ),
             howToApplySteps = listOf(
-                "Step 1: Approach your nearest bank branch or apply on udyamimitra.in portal.",
+                "Step 1: Click 'Apply Now' to apply on JanSamarth National Credit Portal (jansamarth.in) or approach nearest bank branch.",
                 "Step 2: Submit 1-page Mudra loan application format with quotations.",
                 "Step 3: Branch manager processes collateral-free sanction within 7-10 days."
             ),
             channelPartnersInfo = "Available at all Commercial Banks, RRBs, Small Finance Banks, and MFIs.",
+            officialApplyUrl = "https://www.jansamarth.in",
+            officialPortalName = "JanSamarth Portal (jansamarth.in)",
             isRecommended = false,
             matchPercentage = 89,
             targetBusinessTypes = listOf("retail", "service", "tailoring", "food", "manufacturing")
@@ -302,7 +316,7 @@ object GovernmentDataRepository {
             id = "stand_up_india",
             name = "Stand-Up India Scheme",
             shortName = "Stand-Up India",
-            department = "Department of Financial Services & SIDBI",
+            department = "Department of Financial Services & SIDBI, Govt. of India",
             category = "Business Loan",
             maxLoanAmount = 10000000L,
             maxLoanAmountDisplay = "₹10.00 Lakh to ₹1.00 Crore",
@@ -330,11 +344,13 @@ object GovernmentDataRepository {
                 "Promoters' contribution statement"
             ),
             howToApplySteps = listOf(
-                "Step 1: Register on standupmitra.in or approach the Lead District Bank.",
+                "Step 1: Click 'Apply Now' to register on official Stand-Up Mitra portal (standupmitra.in) or approach Lead District Bank.",
                 "Step 2: Connect with Handholding Agency (SIDBI/NABARD) if guidance is needed.",
                 "Step 3: Bank branch sanctions composite loan (term loan + working capital)."
             ),
             channelPartnersInfo = "All Scheduled Commercial Banks (every branch has a mandate to support SC/ST and women).",
+            officialApplyUrl = "https://www.standupmitra.in",
+            officialPortalName = "Stand-Up Mitra Portal (standupmitra.in)",
             isRecommended = false,
             matchPercentage = 86,
             targetBusinessTypes = listOf("dairy", "manufacturing", "agriculture", "service")

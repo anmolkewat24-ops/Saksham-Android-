@@ -77,6 +77,8 @@ data class ManagedSchemeEntity(
     val moratoriumMonths: Int,
     val eligibilitySummary: String,
     val description: String,
+    val officialApplyUrl: String = "https://nsfdc.nic.in",
+    val officialPortalName: String = "NSFDC Official Portal (nsfdc.nic.in)",
     val isActive: Boolean = true,
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -322,7 +324,7 @@ interface SakshamDao {
         UserFeedbackEntity::class,
         AdminSettingsEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class SakshamDatabase : RoomDatabase() {
